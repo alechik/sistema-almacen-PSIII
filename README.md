@@ -28,3 +28,14 @@ DB_PASSWORD="tu_password"
 
 general la app_key
 php artisan key:generate
+
+
+generar localmente : php artisan serve
+
+instalar roles y usaurios
+composer require spatie/laravel-permission
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+este comando crea un archivo en config/permission.php con el codigo necesario y la migracion db
+
+
+
