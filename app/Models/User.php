@@ -51,4 +51,37 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relación: almacenes creados por este usuario (si es propietario)
+     * Un propietario puede crear varios almacenes
+     */
+    public function almacenesCreados()
+    {
+        return $this->hasMany(Almacen::class, 'user_id');
+    }
+
+    /**
+     * Relación: almacenes asignados (trabajadores)
+     * Relación many-to-many → tabla almacen_user
+     */
+    public function almacenes()
+    {
+        return $this->belongsToMany(Almacen::class, 'almacen_user')
+            ->withTimestamps();
+    }
+
+    /**
+     * Métodos útiles para roles
+     */
+
+    public function isPropietario()
+    {
+        return $this->hasRole('propietario');
+    }
+
+    public function isTrabajador()
+    {
+        return $this->hasRole('trabajador');
+    }
 }

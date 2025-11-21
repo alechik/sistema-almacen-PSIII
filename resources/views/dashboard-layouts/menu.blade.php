@@ -25,8 +25,8 @@
         <!--begin::Sidebar Menu-->
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
-          <li class="nav-item">
-            <a href="#" class="nav-link">
+          <li class="nav-item {{ request()->routeIs('almacenes.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*') ? 'active' : '' }}">
               <i class="nav-icon bi bi-box-seam-fill"></i>
               <p>
                 GESTION ALMACENES
@@ -35,7 +35,7 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{{route('almacenes')}}" class="nav-link active">
+                <a href="{{route('almacenes.index')}}" class="nav-link {{ request()->routeIs('almacenes.*') ? 'active' : '' }}">
                   <i class="nav-icon bi bi-circle"></i>
                   <p>ALMACEN</p>
                 </a>
