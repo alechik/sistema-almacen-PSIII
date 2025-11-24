@@ -249,6 +249,7 @@
     ></script>
 
     @stack('jsvectormap')
+    @stack('scripts')
 
   </body>
   <!--end::Body-->

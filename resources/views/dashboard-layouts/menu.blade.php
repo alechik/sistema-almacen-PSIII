@@ -25,11 +25,11 @@
         <!--begin::Sidebar Menu-->
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
-          <li class="nav-item {{ request()->routeIs('almacenes.*') ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*') ? 'active' : '' }}">
+          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*') ? 'active' : '' }}">
               <i class="nav-icon bi bi-box-seam-fill"></i>
               <p>
-                GESTION ALMACENES
+                ADM. DE ALMACENES
                 <i class="nav-arrow bi bi-chevron-right"></i>
               </p>
             </a>
@@ -40,22 +40,85 @@
                   <p>ALMACEN</p>
                 </a>
               </li>
-              <li class="nav-item">
+              <li class="nav-item {{ request()->routeIs('tiposalidas.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link">
                   <i class="nav-icon bi bi-circle"></i>
-                  <p>SALIDAS</p>
+                  <p>
+                    GESTION SALIDAS
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
                 </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Salidas</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{route('tiposalidas.index')}}" class="nav-link {{ request()->routeIs('tiposalidas.*') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Tipo de Salidas</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item {{ request()->routeIs('tipoingresos.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon bi bi-circle"></i>
+                  <p>
+                    GESTION INGRESOS
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>PEDIDOS</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>INGRESOS</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{route('tipoingresos.index')}}" class="nav-link {{ request()->routeIs('tipoingresos.*') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Tipo de Ingresos</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item {{ request()->routeIs('categorias.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon bi bi-circle"></i>
+                  <p>
+                    GESTION ARTICULOS
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Productos</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{route('categorias.index')}}" class="nav-link {{ request()->routeIs('categorias.*') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Categorias</p>
+                    </a>
+                  </li>
+                </ul>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">
+                <a href="{{route('vehiculos.index')}}" class="nav-link {{ request()->routeIs('vehiculos.*') ? 'active' : '' }}">
                   <i class="nav-icon bi bi-circle"></i>
-                  <p>INGRESOS</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>PRODUCTOS</p>
+                  <p>VEHICULOS</p>
                 </a>
               </li>
             </ul>
