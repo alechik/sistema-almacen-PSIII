@@ -22,7 +22,7 @@ class VehiculoController extends Controller
      */
     public function create()
     {
-        
+
         return view('vehiculos.create');
     }
 
@@ -63,7 +63,7 @@ class VehiculoController extends Controller
      */
     public function show(Vehiculo $vehiculo)
     {
-        //
+        return view('vehiculos.show', compact('vehiculo'));
     }
 
     /**
@@ -71,7 +71,7 @@ class VehiculoController extends Controller
      */
     public function edit(Vehiculo $vehiculo)
     {
-        //
+        return view('vehiculos.edit', compact('vehiculo'));
     }
 
     /**
@@ -79,7 +79,31 @@ class VehiculoController extends Controller
      */
     public function update(Request $request, Vehiculo $vehiculo)
     {
-        //
+        $request->validate([
+            'placa_identificacion' => 'required|string|max:50|unique:vehiculos,placa_identificacion,' . $vehiculo->id,
+            'marca_modelo' => 'required|string|max:150',
+            'anio' => 'nullable|string|max:20',
+        ], [
+            'placa_identificacion.required' => 'La placa de identificación es obligatoria.',
+            'placa_identificacion.max' => 'La placa no debe superar los 50 caracteres.',
+            'placa_identificacion.unique' => 'Ya existe un vehículo con esa placa.',
+
+            'marca_modelo.required' => 'El campo marca/modelo es obligatorio.',
+            'marca_modelo.max' => 'La marca/modelo no debe superar los 150 caracteres.',
+
+            'anio.max' => 'El año no debe superar los 20 caracteres.',
+        ]);
+
+        // Actualizar vehículo
+        $vehiculo->update([
+            'placa_identificacion' => $request->placa_identificacion,
+            'marca_modelo' => $request->marca_modelo,
+            'anio' => $request->anio,
+        ]);
+
+        return redirect()
+            ->route('vehiculos.index')
+            ->with('success', 'Vehículo actualizado correctamente.');
     }
 
     /**
@@ -87,6 +111,16 @@ class VehiculoController extends Controller
      */
     public function destroy(Vehiculo $vehiculo)
     {
-        //
+        try {
+            $vehiculo->delete();
+
+            return redirect()
+                ->route('vehiculos.index')
+                ->with('success', 'Vehículo eliminado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('vehiculos.index')
+                ->with('error', 'No se pudo eliminar el vehículo. Verifique si está relacionado con otros registros.');
+        }
     }
 }

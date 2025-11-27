@@ -51,7 +51,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Lista de Tipos de Ingreso</h3>
 
-                    <a href="{{ route('tipoingresos.create') }}" class="btn btn-primary btn-sm">
+                    <a href="{{ route('tipoingresos.create') }}" class="btn btn-primary btn-sm ms-auto">
                         <i class="fas fa-plus"></i> Nuevo Tipo de Ingreso
                     </a>
                 </div>

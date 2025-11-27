@@ -9,12 +9,12 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-6">
-                    <h3 class="mb-0">Listado de Tipos de Salida</h3>
+                    <h3 class="mb-0">Listado de Productos</h3>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-end">
                         <li class="breadcrumb-item"><a href="#">Inicio</a></li>
-                        <li class="breadcrumb-item active">Tipos de Salida</li>
+                        <li class="breadcrumb-item active">Productos</li>
                     </ol>
                 </div>
             </div>
@@ -45,14 +45,13 @@
                 </div>
             @endif
 
-            <!-- Tarjeta principal -->
+            <!-- Tarjeta -->
             <div class="card">
 
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">Lista de Tipos de Salida</h3>
-
-                    <a href="{{ route('tiposalidas.create') }}" class="btn btn-primary btn-sm ms-auto">
-                        <i class="fas fa-plus"></i> Nuevo Tipo de Salida
+                    <h3 class="card-title">Lista de Productos</h3>
+                    <a href="{{ route('productos.create') }}" class="btn btn-primary btn-sm ms-auto">
+                        <i class="fas fa-plus"></i> Nuevo Producto
                     </a>
                 </div>
 
@@ -61,52 +60,74 @@
                         <thead class="text-center">
                             <tr>
                                 <th>ID</th>
+                                <th>Código</th>
                                 <th>Nombre</th>
-                                <th>Descripción</th>
+                                <th>Stock</th>
+                                {{-- <th>Precio</th> --}}
+                                <th>Categoría</th>
+                                <th>Proveedor</th>
+                                <th>Estado</th> {{-- Nuevo --}}
                                 <th width="150px">Acciones</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                        @forelse ($tipos as $tipo)
+                        @forelse ($productos as $producto)
                             <tr class="align-middle">
-                                <td>{{ $tipo->id }}</td>
-                                <td>{{ $tipo->nombre }}</td>
-                                <td>{{ $tipo->descripcion }}</td>
+                                <td>{{ $producto->id }}</td>
+                                <td>{{ $producto->cod_producto }}</td>
+                                <td>{{ $producto->nombre }}</td>
+                                <td>{{ $producto->stock }}</td>
+                                {{-- <td>{{ $producto->precio }}</td> --}}
+                                <td>{{ $producto->categoria->nombre ?? '-' }}</td>
+
+                                <td>
+                                    @php
+                                        $proveedor = collect($proveedores)->firstWhere('id', $producto->proveedor_id);
+                                    @endphp
+                                    {{ $proveedor['nombre'] ?? '-' }}
+                                </td>
+
+                                {{-- NUEVA COLUMNA ESTADO --}}
+                                <td class="text-center">
+                                    @if ($producto->estado == 1 || $producto->estado == 'activo')
+                                        <span class="badge bg-success">Activo</span>
+                                    @else
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    @endif
+                                </td>
 
                                 <td class="text-center">
-
-                                    <a href="{{ route('tiposalidas.show', $tipo) }}" 
-                                       class="btn btn-info btn-sm">
+                                    <a href="{{ route('productos.show', $producto) }}" 
+                                    class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
 
-                                    <a href="{{ route('tiposalidas.edit', $tipo->id) }}" 
-                                       class="btn btn-warning btn-sm">
+                                    <a href="{{ route('productos.edit', $producto) }}" 
+                                    class="btn btn-warning btn-sm">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
 
-                                    <!-- Botón de eliminar: NO ENVÍA FORMULARIO -->
                                     <button 
                                         type="button"
                                         class="btn btn-danger btn-sm"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalEliminar"
-                                        data-id="{{ $tipo->id }}"
-                                        data-nombre="{{ $tipo->nombre }}">
+                                        data-id="{{ $producto->id }}"
+                                        data-nombre="{{ $producto->nombre }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
-
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center p-3">
-                                    No existen tipos de salida registrados.
+                                <td colspan="9" class="text-center p-3">
+                                    No existen productos registrados.
                                 </td>
                             </tr>
                         @endforelse
                         </tbody>
+
 
                     </table>
                 </div>
@@ -114,7 +135,7 @@
                 <!-- Paginación -->
                 <div class="card-footer clearfix">
                     <div class="float-end">
-                        {{ $tipos->links('pagination::bootstrap-5') }}
+                        {{ $productos->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
 
@@ -136,8 +157,8 @@
             </div>
 
             <div class="modal-body">
-                <p>¿Está seguro que desea eliminar el tipo de salida:</p>
-                <h5 class="fw-bold text-danger" id="nombreTipoSalida"></h5>
+                <p>¿Está seguro que desea eliminar el producto?</p>
+                <h5 class="fw-bold text-danger" id="nombreProducto"></h5>
                 <p>Esta acción no se puede deshacer.</p>
             </div>
 
@@ -158,21 +179,21 @@
 </div>
 
 @endsection
+
 @push('scripts')
-    <!-- Script para pasar datos al modal -->
-    <script>
-        const modalEliminar = document.getElementById('modalEliminar');
+<script>
+    const modalEliminar = document.getElementById('modalEliminar');
 
-        modalEliminar.addEventListener('show.bs.modal', function (event) {
+    modalEliminar.addEventListener('show.bs.modal', function (event) {
 
-            const button = event.relatedTarget; 
-            const id = button.getAttribute('data-id');
-            const nombre = button.getAttribute('data-nombre');
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const nombre = button.getAttribute('data-nombre');
 
-            document.getElementById('nombreTipoSalida').textContent = nombre;
+        document.getElementById('nombreProducto').textContent = nombre;
 
-            const form = document.getElementById('formEliminar');
-            form.action = `/tiposalidas/${id}`;
-        });
-    </script>
+        const form = document.getElementById('formEliminar');
+        form.action = `/productos/${id}`;
+    });
+</script>
 @endpush

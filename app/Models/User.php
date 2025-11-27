@@ -14,6 +14,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     use HasRoles;
+    protected $guard_name = 'web'; // Muy importante para Spatie
 
     /**
      * The attributes that are mass assignable.

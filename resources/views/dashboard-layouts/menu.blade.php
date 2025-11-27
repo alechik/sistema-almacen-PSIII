@@ -25,8 +25,8 @@
         <!--begin::Sidebar Menu-->
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
-          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*') ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*') ? 'active' : '' }}">
+          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*') ? 'active' : '' }}">
               <i class="nav-icon bi bi-box-seam-fill"></i>
               <p>
                 ADM. DE ALMACENES
@@ -92,7 +92,7 @@
                   </li>
                 </ul>
               </li>
-              <li class="nav-item {{ request()->routeIs('categorias.*') ? 'menu-open' : '' }}">
+              <li class="nav-item {{ request()->routeIs('categorias.*','productos.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link">
                   <i class="nav-icon bi bi-circle"></i>
                   <p>
@@ -102,7 +102,7 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{route('productos.index')}}" class="nav-link {{ request()->routeIs('productos.*') ? 'active' : '' }}">
                       <i class="nav-icon bi bi-dot"></i>
                       <p>Productos</p>
                     </a>
@@ -120,6 +120,46 @@
                   <i class="nav-icon bi bi-circle"></i>
                   <p>VEHICULOS</p>
                 </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item {{ request()->routeIs('users.*','roles.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('users.*','roles.*') ? 'active' : '' }}">
+              <i class="nav-icon bi bi-box-seam-fill"></i>
+              <p>
+                ADM. GENERAL
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              {{-- <li class="nav-item">
+                <a href="{{route('usuarios.index')}}" class="nav-link {{ request()->routeIs('almacenes.*') ? 'active' : '' }}">
+                  <i class="nav-icon bi bi-circle"></i>
+                  <p>ALMACEN</p>
+                </a>
+              </li> --}}
+              <li class="nav-item {{ request()->routeIs('users.*','roles.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon bi bi-circle"></i>
+                  <p>
+                    GESTION USUARIOS
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Usuarios</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{route('roles.index')}}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Roles</p>
+                    </a>
+                  </li>
+                </ul>
               </li>
             </ul>
           </li>

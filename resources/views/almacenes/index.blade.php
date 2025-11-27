@@ -50,7 +50,7 @@
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Lista de Almacenes</h3>
-                    <a href="{{ route('almacenes.create') }}" class="btn btn-primary btn-sm">
+                    <a href="{{ route('almacenes.create') }}" class="btn btn-primary btn-sm ms-auto">
                         <i class="fas fa-plus"></i> Nuevo Almacén
                     </a>
                 </div>

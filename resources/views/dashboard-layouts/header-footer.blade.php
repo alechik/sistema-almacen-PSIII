@@ -78,7 +78,7 @@
       @include('dashboard-layouts.header-menu')
       {{-- FIN MENU SUPERIOR --}}
 
-      {{-- MENU --}}
+      {{-- MENU LATERAL--}}
       @include('dashboard-layouts.menu')
       {{-- FIN MENU --}}
 

@@ -9,12 +9,12 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-6">
-                    <h3 class="mb-0">Listado de Tipos de Salida</h3>
+                    <h3 class="mb-0">Listado de Roles</h3>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-end">
                         <li class="breadcrumb-item"><a href="#">Inicio</a></li>
-                        <li class="breadcrumb-item active">Tipos de Salida</li>
+                        <li class="breadcrumb-item active">Roles</li>
                     </ol>
                 </div>
             </div>
@@ -25,14 +25,22 @@
     <div class="app-content">
         <div class="container-fluid">
 
-            <!-- Mensajes -->
-            @if (session('success'))
+            <!-- Mensaje de éxito -->
+            @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            <!-- Errores -->
             @if ($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Hay errores:</strong>
@@ -49,51 +57,50 @@
             <div class="card">
 
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">Lista de Tipos de Salida</h3>
+                    <h3 class="card-title">Lista de Roles</h3>
 
-                    <a href="{{ route('tiposalidas.create') }}" class="btn btn-primary btn-sm ms-auto">
-                        <i class="fas fa-plus"></i> Nuevo Tipo de Salida
+                    <a href="{{ route('roles.create') }}" class="btn btn-primary btn-sm ms-auto">
+                        <i class="fas fa-plus"></i> Nuevo Rol
                     </a>
                 </div>
 
                 <div class="card-body p-0">
+
                     <table class="table table-bordered table-striped mb-0">
                         <thead class="text-center">
                             <tr>
                                 <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th width="150px">Acciones</th>
+                                <th>Nombre del Rol</th>
+                                <th width="160px">Acciones</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                        @forelse ($tipos as $tipo)
+                        @forelse ($roles as $role)
                             <tr class="align-middle">
-                                <td>{{ $tipo->id }}</td>
-                                <td>{{ $tipo->nombre }}</td>
-                                <td>{{ $tipo->descripcion }}</td>
+                                <td>{{ $role->id }}</td>
+                                <td>{{ $role->name }}</td>
 
                                 <td class="text-center">
 
-                                    <a href="{{ route('tiposalidas.show', $tipo) }}" 
+                                    <a href="{{ route('roles.show', $role) }}" 
                                        class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
 
-                                    <a href="{{ route('tiposalidas.edit', $tipo->id) }}" 
+                                    <a href="{{ route('roles.edit', $role) }}" 
                                        class="btn btn-warning btn-sm">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
 
-                                    <!-- Botón de eliminar: NO ENVÍA FORMULARIO -->
+                                    <!-- Botón Eliminar -->
                                     <button 
                                         type="button"
                                         class="btn btn-danger btn-sm"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalEliminar"
-                                        data-id="{{ $tipo->id }}"
-                                        data-nombre="{{ $tipo->nombre }}">
+                                        data-id="{{ $role->id }}"
+                                        data-nombre="{{ $role->name }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
 
@@ -101,20 +108,21 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center p-3">
-                                    No existen tipos de salida registrados.
+                                <td colspan="3" class="text-center p-3">
+                                    No existen roles registrados.
                                 </td>
                             </tr>
                         @endforelse
                         </tbody>
 
                     </table>
+
                 </div>
 
                 <!-- Paginación -->
                 <div class="card-footer clearfix">
                     <div class="float-end">
-                        {{ $tipos->links('pagination::bootstrap-5') }}
+                        {{ $roles->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
 
@@ -136,8 +144,8 @@
             </div>
 
             <div class="modal-body">
-                <p>¿Está seguro que desea eliminar el tipo de salida:</p>
-                <h5 class="fw-bold text-danger" id="nombreTipoSalida"></h5>
+                <p>¿Está seguro que desea eliminar el rol:</p>
+                <h5 class="fw-bold text-danger" id="nombreRol"></h5>
                 <p>Esta acción no se puede deshacer.</p>
             </div>
 
@@ -158,21 +166,20 @@
 </div>
 
 @endsection
+
 @push('scripts')
-    <!-- Script para pasar datos al modal -->
-    <script>
-        const modalEliminar = document.getElementById('modalEliminar');
+<script>
+    const modalEliminar = document.getElementById('modalEliminar');
 
-        modalEliminar.addEventListener('show.bs.modal', function (event) {
+    modalEliminar.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const nombre = button.getAttribute('data-nombre');
 
-            const button = event.relatedTarget; 
-            const id = button.getAttribute('data-id');
-            const nombre = button.getAttribute('data-nombre');
+        document.getElementById('nombreRol').textContent = nombre;
 
-            document.getElementById('nombreTipoSalida').textContent = nombre;
-
-            const form = document.getElementById('formEliminar');
-            form.action = `/tiposalidas/${id}`;
-        });
-    </script>
+        const form = document.getElementById('formEliminar');
+        form.action = `/roles/${id}`;
+    });
+</script>
 @endpush
