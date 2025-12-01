@@ -28,6 +28,8 @@ class User extends Authenticatable
         'password',
         'company',
         'phone_number',
+        'estado',
+        'user_id'
     ];
 
     /**
@@ -71,6 +73,19 @@ class User extends Authenticatable
         return $this->belongsToMany(Almacen::class, 'almacen_user')
             ->withTimestamps();
     }
+
+    // Relación con su usuario padre (nullable)
+    public function parent()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Un usuario puede tener hijos (otros usuarios)
+    public function children()
+    {
+        return $this->hasMany(User::class, 'user_id');
+    }
+
 
     /**
      * Métodos útiles para roles

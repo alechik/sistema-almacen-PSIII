@@ -25,8 +25,8 @@
         <!--begin::Sidebar Menu-->
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
-          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*') ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*') ? 'active' : '' }}">
+          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*') ? 'active' : '' }}">
               <i class="nav-icon bi bi-box-seam-fill"></i>
               <p>
                 ADM. DE ALMACENES
@@ -63,7 +63,7 @@
                   </li>
                 </ul>
               </li>
-              <li class="nav-item {{ request()->routeIs('tipoingresos.*') ? 'menu-open' : '' }}">
+              <li class="nav-item {{ request()->routeIs('tipoingresos.*','pedidos.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link">
                   <i class="nav-icon bi bi-circle"></i>
                   <p>
@@ -73,15 +73,27 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{route('pedidos.create')}}" class="nav-link {{ request()->routeIs('pedidos.create') ? 'active' : '' }}">
                       <i class="nav-icon bi bi-dot"></i>
-                      <p>PEDIDOS</p>
+                      <p>NUEVO PEDIDO</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{route('pedidos.index')}}" class="nav-link {{ request()->routeIs('pedidos.index','pedidos.edit','pedidos.show') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>CONSULTAR PEDIDOS</p>
                     </a>
                   </li>
                   <li class="nav-item">
                     <a href="#" class="nav-link">
                       <i class="nav-icon bi bi-dot"></i>
-                      <p>INGRESOS</p>
+                      <p>NUEVO INGRESO</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>CONSULTAR INGRESOS</p>
                     </a>
                   </li>
                   <li class="nav-item">
@@ -148,7 +160,7 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{route('users.index')}}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
                       <i class="nav-icon bi bi-dot"></i>
                       <p>Usuarios</p>
                     </a>

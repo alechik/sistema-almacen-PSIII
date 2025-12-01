@@ -47,8 +47,8 @@ class Almacen extends Model
     //     return $this->hasMany(Salida::class);
     // }
 
-    // public function pedidos()
-    // {
-    //     return $this->hasMany(Pedido::class);
-    // }
+    public function pedidos()
+    {
+        return $this->hasMany(Pedido::class);
+    }
 }

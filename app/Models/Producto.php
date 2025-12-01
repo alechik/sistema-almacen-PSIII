@@ -53,8 +53,8 @@ class Producto extends Model
     // }
 
     // Relación con detalle de pedidos
-    // public function detallesPedido()
-    // {
-    //     return $this->hasMany(DetallePedido::class);
-    // }
+    public function detallesPedido()
+    {
+        return $this->hasMany(DetallePedido::class);
+    }
 }
