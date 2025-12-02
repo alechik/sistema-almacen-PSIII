@@ -204,4 +204,29 @@ class PedidoController extends Controller
     {
         //
     }
+    public function confirmar(Pedido $pedido)
+    {
+        if ($pedido->estado != Pedido::EMITIDO) {
+            return back()->with('error', 'Solo los pedidos EMITIDOS pueden ser confirmados.');
+        }
+
+        $pedido->update([
+            'estado' => Pedido::CONFIRMADO
+        ]);
+
+        return back()->with('success', 'Pedido confirmado correctamente.');
+    }
+
+    public function anular(Pedido $pedido)
+    {
+        if ($pedido->estado == Pedido::TERMINADO) {
+            return back()->with('error', 'No se puede anular un pedido TERMINADO.');
+        }
+
+        $pedido->update([
+            'estado' => Pedido::ANULADO
+        ]);
+
+        return back()->with('success', 'Pedido anulado correctamente.');
+    }
 }

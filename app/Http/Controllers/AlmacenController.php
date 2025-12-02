@@ -16,7 +16,7 @@ class AlmacenController extends Controller
         $user = Auth::user();
         // dd($user);
         // Si es propietario → ve solo los almacenes que él creó
-        if ($user->hasRole('admin')) { //Cambiar a propietario luego
+        if ($user->hasRole('propietario')) { //Cambiar a propietario luego
             $almacenes = Almacen::where('user_id', $user->id)
                 ->orderBy('id', 'asc')
                 ->paginate(10);

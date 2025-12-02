@@ -98,7 +98,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
     Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
-
 });
 
 Route::middleware('auth')->group(function () {
@@ -110,7 +109,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -122,5 +120,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pedidos/{pedido}/edit', [PedidoController::class, 'edit'])->name('pedidos.edit');
     Route::put('/pedidos/{pedido}', [PedidoController::class, 'update'])->name('pedidos.update');
     Route::delete('/pedidos/{pedido}', [PedidoController::class, 'destroy'])->name('pedidos.destroy');
-
+    // Cambiar el estado del pedido
+    Route::put('/pedidos/{pedido}/confirmar', [PedidoController::class, 'confirmar'])
+        ->name('pedidos.confirmar');
+    Route::put('/pedidos/{pedido}/anular', [PedidoController::class, 'anular'])
+        ->name('pedidos.anular');
 });

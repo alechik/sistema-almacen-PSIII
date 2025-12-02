@@ -99,23 +99,26 @@
 
                                 <td class="text-center">
 
-                                    <a href="{{ route('pedidos.show', $pedido) }}" class="btn btn-info btn-sm">
+                                    <a title="Ver Pedido" href="{{ route('pedidos.show', $pedido) }}" class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     @hasrole('propietario')
-                                        <a href="{{ route('pedidos.edit', $pedido) }}" class="btn btn-warning btn-sm">
+                                            <button title="Confirmar pedido" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarModal">
+                                                <i class="bi bi-bag-check"></i>
+                                            </button>
+                                        <a title="Editar Pedido" href="{{ route('pedidos.edit', $pedido) }}" class="btn btn-warning btn-sm">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
                                     @endhasrole
 
-                                    <button type="button"
+                                    {{-- <button type="button"
                                         class="btn btn-danger btn-sm"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalEliminar"
                                         data-id="{{ $pedido->id }}"
                                         data-nombre="Pedido #{{ $pedido->codigo_comprobante }}">
                                         <i class="bi bi-trash"></i>
-                                    </button>
+                                    </button> --}}
                                 </td>
 
                             </tr>
@@ -172,7 +175,70 @@
         </div>
     </div>
 </div>
+<!-- MODAL CONFIRMAR -->
+<div class="modal fade" id="confirmarModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Confirmar Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
+            <div class="modal-body">
+                <p class="mb-3">Confirma el siguiente pedido:</p>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item">
+                        <div class="row">
+                            <div class="col-6"><strong>Código:</strong> {{ $pedido->codigo_comprobante }}</div>
+                            <div class="col-6"><strong>Fecha:</strong> {{ $pedido->fecha }}</div>
+                        </div>
+                    </li>
+
+                    <li class="list-group-item">
+                        <div class="row">
+                            <div class="col-6"><strong>Almacén:</strong> {{ $pedido->almacen->nombre }}</div>
+                            <div class="col-6"><strong>Proveedor:</strong>
+                                {{
+                                    collect($proveedores)
+                                        ->firstWhere('id', $pedido->proveedor_id)['nombre']
+                                        ?? 'No definido'
+                                }}
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+                <h6 class="text-uppercase fw-bold">Detalle del Pedido</h6>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center" style="width: 25%">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pedido->detalles as $detalle)
+                            <tr>
+                                <td>{{ $detalle->producto->nombre }}</td>
+                                <td class="text-center">{{ $detalle->cantidad }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <p class="text-muted small mt-2">Esta acción no se puede revertir.</p>
+            </div>
+
+            <div class="modal-footer">
+                <form method="POST" action="{{ route('pedidos.confirmar', $pedido->id) }}">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="btn btn-success">Sí, Confirmar</button>
+                </form>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
