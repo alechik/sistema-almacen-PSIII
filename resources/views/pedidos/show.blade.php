@@ -19,9 +19,17 @@
 
             <!-- DATOS GENERALES -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Datos del Pedido</h5>
+                    @if ($pedido->estado!=1)
+                        <button type="button" class="btn btn-danger btn-sm ms-auto" 
+                            data-bs-toggle="modal" data-bs-target="#pdfModal" title="Imprimir PDF">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>
+                            PDF
+                        </button>
+                    @endif
                 </div>
+
                 <div class="card-body">
 
                     <div class="row mb-2">
@@ -277,5 +285,40 @@
         </div>
     </div>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl" style="max-width:90%;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Vista previa - Comprobante</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" style="height: 80vh; padding:0;">
+        <iframe id="pdfFrame" src="" frameborder="0" style="width:100%; height:100%;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <a id="pdfDownload" href="{{ route('pedidos.pdf', $pedido->id) }}" class="btn btn-secondary" target="_blank">Abrir en pestaña</a>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('pdfFrame').contentWindow.print();">Imprimir</button>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+@push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('pdfModal')
+    modal.addEventListener('show.bs.modal', function (event) {
+        // setear el src del iframe cuando se abra el modal (mejor rendimiento)
+        var frame = document.getElementById('pdfFrame');
+        frame.src = "{{ route('pedidos.pdf', $pedido->id) }}";
+    })
+    modal.addEventListener('hidden.bs.modal', function () {
+        // limpiar src al cerrar para liberar memoria
+        document.getElementById('pdfFrame').src = '';
+    })
+    });
+    </script>
+@endpush
 
 @endsection

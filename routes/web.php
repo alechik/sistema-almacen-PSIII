@@ -125,4 +125,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('pedidos.confirmar');
     Route::put('/pedidos/{pedido}/anular', [PedidoController::class, 'anular'])
         ->name('pedidos.anular');
+
+    // REPORTE EN PDF
+    Route::get('/pedidos/{pedido}/pdf', [PedidoController::class, 'generarPDF'])
+        ->name('pedidos.pdf');
 });

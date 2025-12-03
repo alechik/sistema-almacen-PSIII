@@ -7,6 +7,7 @@ use App\Models\DetallePedido;
 use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -228,5 +229,49 @@ class PedidoController extends Controller
         ]);
 
         return back()->with('success', 'Pedido anulado correctamente.');
+    }
+
+
+    public function generarPDF(Pedido $pedido)
+    {
+        $usuario = Auth::user();
+        $empresa = $usuario->hasRole('propietario')
+            ? $usuario
+            : $usuario->parent;
+
+        $pedido->load(['almacen', 'operador', 'transportista', 'administrador', 'detalles.producto']);
+        $proveedores = $this->proveedores;
+
+        $pdf = Pdf::loadView('pedidos.comprobante-pdf', compact('pedido', 'proveedores', 'empresa'))
+            ->setPaper('letter', 'portrait');
+
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->get_canvas();
+
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+
+        // === TEXTO IZQUIERDA DEL FOOTER (admin + fecha) ===
+        $canvas->page_text(
+            25,                   // X (parte izquierda)
+            $h - 35,              // Y (bien abajo)
+            "Solicitado por: " . ($pedido->administrador->full_name ?? '-') .
+                "    |    Fecha: " . now()->format('d/m/Y'),
+            null,
+            9,
+            [0, 0, 0]
+        );
+
+        // === NUMERACIÓN A LA DERECHA ===
+        $canvas->page_text(
+            $w - 120,            // X (derecha)
+            $h - 35,             // misma altura exacta
+            "Página {PAGE_NUM} de {PAGE_COUNT}",
+            null,
+            9,
+            [0, 0, 0]
+        );
+
+        return $pdf->stream("pedido-{$pedido->codigo_comprobante}.pdf");
     }
 }
