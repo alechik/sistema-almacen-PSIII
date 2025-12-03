@@ -25,8 +25,8 @@
         <!--begin::Sidebar Menu-->
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
-          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*') ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*') ? 'active' : '' }}">
+          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*','unidad-medidas.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*','unidad-medidas.*') ? 'active' : '' }}">
               <i class="nav-icon bi bi-box-seam-fill"></i>
               <p>
                 ADM. DE ALMACENES
@@ -104,7 +104,7 @@
                   </li>
                 </ul>
               </li>
-              <li class="nav-item {{ request()->routeIs('categorias.*','productos.*') ? 'menu-open' : '' }}">
+              <li class="nav-item {{ request()->routeIs('categorias.*','productos.*','unidad-medidas.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link">
                   <i class="nav-icon bi bi-circle"></i>
                   <p>
@@ -123,6 +123,12 @@
                     <a href="{{route('categorias.index')}}" class="nav-link {{ request()->routeIs('categorias.*') ? 'active' : '' }}">
                       <i class="nav-icon bi bi-dot"></i>
                       <p>Categorias</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{route('unidad-medidas.index')}}" class="nav-link {{ request()->routeIs('unidad-medidas.*') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-dot"></i>
+                      <p>Unidad Medidas</p>
                     </a>
                   </li>
                 </ul>

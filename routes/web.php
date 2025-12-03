@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TipoIngresoController;
 use App\Http\Controllers\TipoSalidaController;
+use App\Http\Controllers\UnidadMedidaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculoController;
 use Illuminate\Support\Facades\Route;
@@ -87,6 +88,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
+});
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/unidad-medidas', [UnidadMedidaController::class, 'index'])->name('unidad-medidas.index');
+    Route::get('/unidad-medidas/create', [UnidadMedidaController::class, 'create'])->name('unidad-medidas.create');
+    Route::post('/unidad-medidas', [UnidadMedidaController::class, 'store'])->name('unidad-medidas.store');
+    Route::get('/unidad-medidas/{unidadMedida}', [UnidadMedidaController::class, 'show'])->name('unidad-medidas.show');
+    Route::get('/unidad-medidas/{unidadMedida}/edit', [UnidadMedidaController::class, 'edit'])->name('unidad-medidas.edit');
+    Route::put('/unidad-medidas/{unidadMedida}', [UnidadMedidaController::class, 'update'])->name('unidad-medidas.update');
+    Route::delete('/unidad-medidas/{unidadMedida}', [UnidadMedidaController::class, 'destroy'])->name('unidad-medidas.destroy');
+
 });
 
 Route::middleware('auth')->group(function () {
