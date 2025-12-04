@@ -22,7 +22,6 @@
         </div>
     </div>
 
-
     <!-- Contenido -->
     <div class="app-content">
         <div class="container-fluid">
@@ -106,6 +105,24 @@
                                     @endforeach
                                 </select>
                                 @error('proveedor_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+
+                            <!-- Unidad de Medida -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Unidad de Medida *</label>
+                                <select name="unidad_medida_id"
+                                        class="form-select @error('unidad_medida_id') is-invalid @enderror">
+                                    <option value="">Seleccione...</option>
+                                    @foreach ($unidades as $uni)
+                                        <option value="{{ $uni->id }}"
+                                            {{ old('unidad_medida_id') == $uni->id ? 'selected' : '' }}>
+                                            {{ $uni->cod_unidad_medida }} - {{ $uni->descripcion }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('unidad_medida_id')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>

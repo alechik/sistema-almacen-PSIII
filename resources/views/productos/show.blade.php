@@ -24,7 +24,7 @@
     <div class="app-content">
         <div class="container-fluid">
 
-            <div class="card">
+            <div class="card shadow-sm">
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Información del Producto</h3>
@@ -36,63 +36,79 @@
                 <div class="card-body">
                     <div class="row">
 
+                        <!-- Código -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Código:</label>
                             <p>{{ $producto->cod_producto }}</p>
                         </div>
 
+                        <!-- Nombre -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Nombre:</label>
                             <p>{{ $producto->nombre }}</p>
                         </div>
 
-                        {{-- Estado con badge --}}
+                        <!-- Estado -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Estado:</label>
                             <p>
                                 @if ($producto->estado == 1 || $producto->estado == 'activo')
-                                    <span class="badge bg-success">Activo</span>
+                                    <span class="badge bg-success px-3 py-1">Activo</span>
                                 @else
-                                    <span class="badge bg-danger">Inactivo</span>
+                                    <span class="badge bg-danger px-3 py-1">Inactivo</span>
                                 @endif
                             </p>
                         </div>
 
+                        <!-- Descripción -->
                         <div class="col-md-12 mb-3">
                             <label class="fw-bold">Descripción:</label>
                             <p>{{ $producto->descripcion ?? 'Sin descripción' }}</p>
                         </div>
 
+                        <!-- Categoría -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Categoría:</label>
                             <p>{{ $producto->categoria->nombre ?? '-' }}</p>
                         </div>
 
+                        <!-- Proveedor -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Proveedor:</label>
                             <p>{{ $proveedor['nombre'] ?? '-' }}</p>
                         </div>
 
+                        <!-- Unidad de Medida -->
+                        <div class="col-md-4 mb-3">
+                            <label class="fw-bold">Unidad de Medida:</label>
+                            <p>{{ $producto->unidadMedida->cod_unidad_medida ?? '-' }}</p>
+                        </div>
+
+                        <!-- Precio -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Precio:</label>
                             <p>{{ number_format($producto->precio, 2) }} Bs</p>
                         </div>
 
+                        <!-- Stock -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Stock:</label>
                             <p>{{ $producto->stock ?? 0 }}</p>
                         </div>
 
+                        <!-- Stock mínimo -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Stock Mínimo:</label>
                             <p>{{ $producto->stock_minimo ?? 0 }}</p>
                         </div>
 
+                        <!-- Fecha de vencimiento -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Fecha de vencimiento:</label>
                             <p>{{ $producto->fech_vencimiento ? \Carbon\Carbon::parse($producto->fech_vencimiento)->format('d/m/Y') : '-' }}</p>
                         </div>
 
+                        <!-- Fechas del sistema -->
                         <div class="col-md-6 mb-3">
                             <label class="fw-bold">Fecha creación:</label>
                             <p>{{ $producto->created_at->format('d/m/Y H:i') }}</p>
@@ -108,16 +124,18 @@
 
                 <!-- Footer botones -->
                 <div class="card-footer d-flex justify-content-end gap-2">
+
                     <a href="{{ route('productos.edit', $producto) }}" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Editar
                     </a>
 
                     <form action="{{ route('productos.destroy', $producto) }}" method="POST"
-                          onsubmit="return confirm('¿Eliminar este producto?')">
+                          onsubmit="return confirm('¿Cambiar el estado del producto?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Eliminar
+                            <i class="fas fa-trash"></i>
+                            {{ $producto->estado == 1 ? 'Desactivar' : 'Activar' }}
                         </button>
                     </form>
                 </div>

@@ -21,7 +21,8 @@ class Producto extends Model
         'categoria_id',
         'cod_producto',
         'precio',
-        'proveedor_id'
+        'proveedor_id',
+        'unidad_medida_id',
     ];
 
     /*
@@ -32,6 +33,10 @@ class Producto extends Model
     public function categoria()
     {
         return $this->belongsTo(Categoria::class);
+    }
+    public function unidadMedida()
+    {
+        return $this->belongsTo(UnidadMedida::class, 'unidad_medida_id');
     }
 
     // Producto pertenece a un Proveedor

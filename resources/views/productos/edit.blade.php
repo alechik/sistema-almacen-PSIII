@@ -54,10 +54,8 @@
 
                             <!-- Nombre -->
                             <div class="col-md-6 mb-3">
-                                <label for="nombre" class="form-label">Nombre *</label>
-                                <input type="text"
-                                       name="nombre"
-                                       id="nombre"
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" name="nombre"
                                        class="form-control @error('nombre') is-invalid @enderror"
                                        value="{{ old('nombre', $producto->nombre) }}">
                                 @error('nombre')
@@ -67,10 +65,8 @@
 
                             <!-- Código -->
                             <div class="col-md-6 mb-3">
-                                <label for="cod_producto" class="form-label">Código *</label>
-                                <input type="text"
-                                       name="cod_producto"
-                                       id="cod_producto"
+                                <label class="form-label">Código *</label>
+                                <input type="text" name="cod_producto"
                                        class="form-control @error('cod_producto') is-invalid @enderror"
                                        value="{{ old('cod_producto', $producto->cod_producto) }}">
                                 @error('cod_producto')
@@ -80,10 +76,8 @@
 
                             <!-- Categoría -->
                             <div class="col-md-6 mb-3">
-                                <label for="categoria_id" class="form-label">Categoría *</label>
-                                <select name="categoria_id"
-                                        id="categoria_id"
-                                        class="form-select @error('categoria_id') is-invalid @enderror">
+                                <label class="form-label">Categoría *</label>
+                                <select name="categoria_id" class="form-select @error('categoria_id') is-invalid @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach ($categorias as $cat)
                                         <option value="{{ $cat->id }}"
@@ -97,12 +91,10 @@
                                 @enderror
                             </div>
 
-                            <!-- Proveedor (array) -->
+                            <!-- Proveedor -->
                             <div class="col-md-6 mb-3">
-                                <label for="proveedor_id" class="form-label">Proveedor *</label>
-                                <select name="proveedor_id"
-                                        id="proveedor_id"
-                                        class="form-select @error('proveedor_id') is-invalid @enderror">
+                                <label class="form-label">Proveedor *</label>
+                                <select name="proveedor_id" class="form-select @error('proveedor_id') is-invalid @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach ($proveedores as $prov)
                                         <option value="{{ $prov['id'] }}"
@@ -116,41 +108,62 @@
                                 @enderror
                             </div>
 
-                            <!-- Stock y Stock mínimo -->
+                            <!-- Unidad de Medida -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Unidad de medida *</label>
+                                <select name="unidad_medida_id"
+                                        class="form-select @error('unidad_medida_id') is-invalid @enderror">
+                                    <option value="">Seleccione...</option>
+                                    @foreach ($unidades as $uni)
+                                        <option value="{{ $uni->id }}"
+                                            {{ $uni->id == old('unidad_medida_id', $producto->unidad_medida_id) ? 'selected' : '' }}>
+                                            {{ $uni->cod_unidad_medida }} - {{ $uni->descripcion }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('unidad_medida_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+
+                            <!-- Stock -->
                             <div class="col-md-4 mb-3">
-                                <label for="stock" class="form-label">Stock</label>
-                                <input type="number"
-                                       name="stock"
+                                <label class="form-label">Stock</label>
+                                <input type="number" step="0.01" name="stock"
                                        class="form-control"
                                        value="{{ old('stock', $producto->stock) }}">
                             </div>
 
+                            <!-- Stock mínimo -->
                             <div class="col-md-4 mb-3">
-                                <label for="stock_minimo" class="form-label">Stock mínimo</label>
-                                <input type="number"
-                                       name="stock_minimo"
+                                <label class="form-label">Stock mínimo</label>
+                                <input type="number" step="0.01" name="stock_minimo"
                                        class="form-control"
                                        value="{{ old('stock_minimo', $producto->stock_minimo) }}">
                             </div>
 
+                            <!-- Precio -->
                             <div class="col-md-4 mb-3">
-                                <label for="precio" class="form-label">Precio</label>
-                                <input type="number"
-                                       step="0.01"
-                                       name="precio"
+                                <label class="form-label">Precio</label>
+                                <input type="number" step="0.01" name="precio"
                                        class="form-control"
                                        value="{{ old('precio', $producto->precio) }}">
                             </div>
 
-                            <!-- Fecha vencimiento -->
+                            <!-- Fecha Vencimiento -->
                             <div class="col-md-6 mb-3">
-                                <label for="fech_vencimiento" class="form-label">Fecha de vencimiento</label>
-                                <input type="date"
-                                       name="fech_vencimiento"
+                                <label class="form-label">Fecha de vencimiento</label>
+                                <input type="date" name="fech_vencimiento"
                                        class="form-control"
                                        value="{{ old('fech_vencimiento', $producto->fech_vencimiento) }}">
                             </div>
 
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea name="descripcion" rows="3" class="form-control">{{ old('descripcion', $producto->descripcion) }}</textarea>
                         </div>
 
                         <!-- Botones -->
@@ -158,7 +171,6 @@
                             <a href="{{ route('productos.index') }}" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Volver
                             </a>
-
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Actualizar
                             </button>

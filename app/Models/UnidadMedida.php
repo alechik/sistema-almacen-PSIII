@@ -16,8 +16,8 @@ class UnidadMedida extends Model
         'descripcion',
     ];
 
-    // public function productos()
-    // {
-    //     return $this->hasMany(Producto::class, 'unidad_medida_id');
-    // }
+    public function productos()
+    {
+        return $this->hasMany(Producto::class, 'unidad_medida_id');
+    }
 }

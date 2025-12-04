@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Categoria;
 use App\Models\Producto;
+use App\Models\UnidadMedida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -34,8 +35,9 @@ class ProductoController extends Controller
     {
         $categorias = Categoria::orderBy('nombre')->get();
         $proveedores = $this->proveedores;
+        $unidades = UnidadMedida::orderBy('cod_unidad_medida')->get();
 
-        return view('productos.create', compact('categorias', 'proveedores'));
+        return view('productos.create', compact('categorias', 'proveedores', 'unidades'));
     }
 
     /**
@@ -43,34 +45,32 @@ class ProductoController extends Controller
      */
     public function store(Request $request)
     {
-        // Reglas de validación
         $rules = [
             'nombre' => 'required|string|max:150',
             'descripcion' => 'nullable|string',
             'cod_producto' => 'required|string|max:100|unique:productos,cod_producto',
             'categoria_id' => 'required|integer|exists:categorias,id',
             'proveedor_id' => 'required|integer',
+            'unidad_medida_id' => 'required|integer|exists:unidad_medidas,id',
+
             'stock' => 'nullable|numeric|min:0',
             'stock_minimo' => 'nullable|numeric|min:0',
             'precio' => 'nullable|numeric|min:0',
             'fech_vencimiento' => 'nullable|date',
         ];
 
-        // Mensajes personalizados en español
         $messages = [
             'nombre.required' => 'El nombre del producto es obligatorio.',
             'cod_producto.required' => 'El código del producto es obligatorio.',
             'cod_producto.unique' => 'Este código ya está registrado.',
             'categoria_id.required' => 'Debe seleccionar una categoría.',
-            'categoria_id.exists' => 'La categoría seleccionada no es válida.',
             'proveedor_id.required' => 'Debe seleccionar un proveedor.',
-            'stock.min' => 'El stock no puede ser negativo.',
-            'precio.min' => 'El precio no puede ser negativo.',
+            'unidad_medida_id.required' => 'Debe seleccionar una unidad de medida.',
+            'unidad_medida_id.exists' => 'La unidad de medida seleccionada no es válida.',
         ];
 
-        Validator::make($request->all(), $rules, $messages)->validate();
+        $request->validate($rules, $messages);
 
-        // Guardar datos
         Producto::create($request->all());
 
         return redirect()
@@ -83,8 +83,9 @@ class ProductoController extends Controller
      */
     public function show(Producto $producto)
     {
-        $proveedor = collect($this->proveedores)
-            ->firstWhere('id', $producto->proveedor_id);
+        $producto->load(['categoria', 'unidadMedida']);
+
+        $proveedor = collect($this->proveedores)->firstWhere('id', $producto->proveedor_id);
 
         return view('productos.show', compact('producto', 'proveedor'));
     }
@@ -96,8 +97,9 @@ class ProductoController extends Controller
     {
         $categorias = Categoria::orderBy('nombre')->get();
         $proveedores = $this->proveedores;
+        $unidades = UnidadMedida::orderBy('cod_unidad_medida')->get();
 
-        return view('productos.edit', compact('producto', 'categorias', 'proveedores'));
+        return view('productos.edit', compact('producto', 'categorias', 'proveedores', 'unidades'));
     }
 
     /**
@@ -105,34 +107,32 @@ class ProductoController extends Controller
      */
     public function update(Request $request, Producto $producto)
     {
-        // Reglas de validación
         $rules = [
             'nombre' => 'required|string|max:150',
             'descripcion' => 'nullable|string',
             'cod_producto' => 'required|string|max:100|unique:productos,cod_producto,' . $producto->id,
             'categoria_id' => 'required|integer|exists:categorias,id',
             'proveedor_id' => 'required|integer',
+            'unidad_medida_id' => 'required|integer|exists:unidad_medidas,id',
+
             'stock' => 'nullable|numeric|min:0',
             'stock_minimo' => 'nullable|numeric|min:0',
             'precio' => 'nullable|numeric|min:0',
             'fech_vencimiento' => 'nullable|date',
         ];
 
-        // Mensajes personalizados en español
         $messages = [
             'nombre.required' => 'El nombre del producto es obligatorio.',
             'cod_producto.required' => 'El código del producto es obligatorio.',
             'cod_producto.unique' => 'Este código ya está registrado.',
             'categoria_id.required' => 'Debe seleccionar una categoría.',
-            'categoria_id.exists' => 'La categoría seleccionada no es válida.',
             'proveedor_id.required' => 'Debe seleccionar un proveedor.',
-            'stock.min' => 'El stock no puede ser negativo.',
-            'precio.min' => 'El precio no puede ser negativo.',
+            'unidad_medida_id.required' => 'Debe seleccionar una unidad de medida.',
+            'unidad_medida_id.exists' => 'La unidad de medida seleccionada no es válida.',
         ];
 
         $request->validate($rules, $messages);
 
-        // Actualizar producto
         $producto->update($request->all());
 
         return redirect()
@@ -145,28 +145,35 @@ class ProductoController extends Controller
      */
     public function destroy(Producto $producto)
     {
-        // Si el producto tiene el atributo estado → lo desactiva
+        // Verificar si el producto tiene el atributo estado
         if ($producto->getAttribute('estado') !== null) {
 
-            // Si el producto está activo → desactiva
+            // Si el producto está ACTIVO → se intenta desactivar
             if ($producto->estado == 1 || $producto->estado == 'activo') {
-                $producto->estado = 0; // o 'inactivo'
-            } else {
-                $producto->estado = 1; // Permite reactivar si lo deseas
+
+                // Verificación de stock
+                if ($producto->stock > 0) {
+                    return redirect()
+                        ->route('productos.index')
+                        ->with('error', 'No se puede desactivar el producto porque tiene stock mayor a 0.');
+                }
+
+                // Stock 0 → se puede desactivar
+                $producto->estado = 0;
+                $producto->save();
+
+                return redirect()
+                    ->route('productos.index')
+                    ->with('success', 'Producto desactivado correctamente.');
             }
 
+            // Si está INACTIVO → se reactiva
+            $producto->estado = 1;
             $producto->save();
 
             return redirect()
                 ->route('productos.index')
-                ->with('success', 'El estado del producto ha sido actualizado correctamente.');
+                ->with('success', 'Producto activado correctamente.');
         }
-
-        // Si no tiene estado → se realiza eliminación real
-        $producto->delete();
-
-        return redirect()
-            ->route('productos.index')
-            ->with('success', 'Producto eliminado correctamente.');
     }
 }

@@ -33,6 +33,13 @@
                 </div>
             @endif
 
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Hay errores:</strong>
@@ -57,16 +64,16 @@
 
                 <div class="card-body p-0">
                     <table class="table table-bordered table-striped mb-0">
-                        <thead class="text-center">
+                        <thead class="text-center align-middle">
                             <tr>
                                 <th>ID</th>
                                 <th>Código</th>
                                 <th>Nombre</th>
+                                <th>Unidad</th>
                                 <th>Stock</th>
-                                {{-- <th>Precio</th> --}}
                                 <th>Categoría</th>
                                 <th>Proveedor</th>
-                                <th>Estado</th> {{-- Nuevo --}}
+                                <th>Estado</th>
                                 <th width="150px">Acciones</th>
                             </tr>
                         </thead>
@@ -74,11 +81,45 @@
                         <tbody>
                         @forelse ($productos as $producto)
                             <tr class="align-middle">
-                                <td>{{ $producto->id }}</td>
-                                <td>{{ $producto->cod_producto }}</td>
+
+                                <td class="text-center">{{ $producto->id }}</td>
+
+                                <td class="text-center fw-bold">{{ $producto->cod_producto }}</td>
+
                                 <td>{{ $producto->nombre }}</td>
-                                <td>{{ $producto->stock }}</td>
-                                {{-- <td>{{ $producto->precio }}</td> --}}
+
+                                {{-- NUEVA COLUMNA UNIDAD DE MEDIDA --}}
+                                <td class="text-center">
+                                    @if ($producto->unidadMedida)
+                                        <span class="fw-bold">
+                                            {{ $producto->unidadMedida->cod_unidad_medida }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ $producto->unidadMedida->descripcion }}
+                                        </small>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+
+                                {{-- STOCK MEJORADO --}}
+                                <td class="text-center">
+                                    @if ($producto->stock <= $producto->stock_minimo)
+                                        <span class="badge bg-danger">
+                                            {{ $producto->stock }}
+                                        </span>
+                                    @elseif ($producto->stock > $producto->stock_minimo * 3)
+                                        <span class="badge bg-success">
+                                            {{ $producto->stock }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-info text-dark">
+                                            {{ $producto->stock }}
+                                        </span>
+                                    @endif
+                                </td>
+
                                 <td>{{ $producto->categoria->nombre ?? '-' }}</td>
 
                                 <td>
@@ -88,7 +129,7 @@
                                     {{ $proveedor['nombre'] ?? '-' }}
                                 </td>
 
-                                {{-- NUEVA COLUMNA ESTADO --}}
+                                {{-- ESTADO --}}
                                 <td class="text-center">
                                     @if ($producto->estado == 1 || $producto->estado == 'activo')
                                         <span class="badge bg-success">Activo</span>
@@ -97,6 +138,7 @@
                                     @endif
                                 </td>
 
+                                <!-- ACCIONES -->
                                 <td class="text-center">
                                     <a href="{{ route('productos.show', $producto) }}" 
                                     class="btn btn-info btn-sm">
@@ -118,6 +160,7 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
+
                             </tr>
                         @empty
                             <tr>
@@ -127,8 +170,6 @@
                             </tr>
                         @endforelse
                         </tbody>
-
-
                     </table>
                 </div>
 
