@@ -25,8 +25,8 @@
         <!--begin::Sidebar Menu-->
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
-          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*','unidad-medidas.*') ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*','unidad-medidas.*') ? 'active' : '' }}">
+          <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*','unidad-medidas.*','ingresos.*') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*','unidad-medidas.*','ingresos.*') ? 'active' : '' }}">
               <i class="nav-icon bi bi-box-seam-fill"></i>
               <p>
                 ADM. DE ALMACENES
@@ -63,7 +63,7 @@
                   </li>
                 </ul>
               </li>
-              <li class="nav-item {{ request()->routeIs('tipoingresos.*','pedidos.*') ? 'menu-open' : '' }}">
+              <li class="nav-item {{ request()->routeIs('tipoingresos.*','pedidos.*','ingresos.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link">
                   <i class="nav-icon bi bi-circle"></i>
                   <p>
@@ -85,13 +85,13 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{route('ingresos.create')}}" class="nav-link {{ request()->routeIs('ingresos.create') ? 'active' : '' }}">
                       <i class="nav-icon bi bi-dot"></i>
                       <p>NUEVO INGRESO</p>
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{route('ingresos.index')}}" class="nav-link">
                       <i class="nav-icon bi bi-dot"></i>
                       <p>CONSULTAR INGRESOS</p>
                     </a>

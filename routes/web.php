@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AlmacenController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\IngresoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProfileController;
@@ -142,4 +143,17 @@ Route::middleware(['auth'])->group(function () {
     // REPORTE EN PDF
     Route::get('/pedidos/{pedido}/pdf', [PedidoController::class, 'generarPDF'])
         ->name('pedidos.pdf');
+});
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/ingresos', [IngresoController::class, 'index'])->name('ingresos.index');
+    Route::get('/ingresos/create', [IngresoController::class, 'create'])->name('ingresos.create');
+    Route::post('/ingresos', [IngresoController::class, 'store'])->name('ingresos.store');
+
+    Route::get('/ingresos/{ingreso}', [IngresoController::class, 'show'])->name('ingresos.show');
+    Route::get('/ingresos/{ingreso}/edit', [IngresoController::class, 'edit'])->name('ingresos.edit');
+    Route::put('/ingresos/{ingreso}', [IngresoController::class, 'update'])->name('ingresos.update');
+
+    Route::delete('/ingresos/{ingreso}', [IngresoController::class, 'destroy'])->name('ingresos.destroy');
 });

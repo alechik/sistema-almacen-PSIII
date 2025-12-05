@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pedido extends Model
 {
-    const CANCELADO = 0;//el proveedor puede cancelar el pedido
-    const EMITIDO = 1;//administrador de almacen
-    const CONFIRMADO = 2;//el propietario
+    const CANCELADO = 0; //el proveedor puede cancelar el pedido
+    const EMITIDO = 1; //administrador de almacen
+    const CONFIRMADO = 2; //el propietario
     const TERMINADO = 3; //el proveedor lo marca como terminado
-    const ANULADO = 4;//el propietario puede anular el pedido
+    const ANULADO = 4; //el propietario puede anular el pedido
     protected $fillable = [
         'codigo_comprobante',
         'fecha',
@@ -52,5 +52,10 @@ class Pedido extends Model
     public function detalles()
     {
         return $this->hasMany(DetallePedido::class, 'pedido_id');
+    }
+
+    public function ingreso()
+    {
+        return $this->hasOne(Ingreso::class, 'pedido_id');
     }
 }
