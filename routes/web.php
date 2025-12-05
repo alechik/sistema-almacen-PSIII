@@ -100,7 +100,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/unidad-medidas/{unidadMedida}/edit', [UnidadMedidaController::class, 'edit'])->name('unidad-medidas.edit');
     Route::put('/unidad-medidas/{unidadMedida}', [UnidadMedidaController::class, 'update'])->name('unidad-medidas.update');
     Route::delete('/unidad-medidas/{unidadMedida}', [UnidadMedidaController::class, 'destroy'])->name('unidad-medidas.destroy');
-
 });
 
 Route::middleware('auth')->group(function () {
@@ -156,4 +155,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/ingresos/{ingreso}', [IngresoController::class, 'update'])->name('ingresos.update');
 
     Route::delete('/ingresos/{ingreso}', [IngresoController::class, 'destroy'])->name('ingresos.destroy');
+
+    Route::put('/ingresos/{ingreso}/cambiar-estado', [IngresoController::class, 'cambiarEstado'])
+        ->name('ingresos.cambiarEstado');
+
+    // imprimir comprobante en PDF
+    Route::get('/ingresos/{ingreso}/pdf', [IngresoController::class, 'pdf'])
+        ->name('ingresos.pdf');
 });

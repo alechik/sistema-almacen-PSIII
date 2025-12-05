@@ -97,28 +97,54 @@
                                     @else
                                         <span class="badge bg-secondary">SIN ESTADO</span>
                                     @endif
+                                    <br>
+                                    @hasrole('propietario|administrador')
+                                        @if ($ingreso->estado == 1)
+
+                                            <!-- Confirmar -->
+                                            <form action="{{ route('ingresos.cambiarEstado', $ingreso) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="accion" value="confirmar">
+                                                <button title="Confirmar" class="btn btn-success btn-sm">
+                                                    <i class="bi bi-check2-circle"></i>
+                                                </button>
+                                            </form>
+
+                                            <!-- Anular -->
+                                            <form action="{{ route('ingresos.cambiarEstado', $ingreso) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="accion" value="anular">
+                                                <button title="Anular" class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+
+                                        @endif
+                                    @endhasrole
+
                                 </td>
 
                                 <td class="text-center">
 
                                     <!-- Ver ingreso -->
-                                    <a 
-                                        title="Ver Ingreso" 
-                                        href="{{ route('ingresos.show', $ingreso) }}" 
-                                        class="btn btn-info btn-sm"
-                                    >
+                                    <a title="Ver Ingreso" href="{{ route('ingresos.show', $ingreso) }}" 
+                                        class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
 
+
+
                                     <!-- Editar ingreso solo para propietario -->
-                                    @hasrole('propietario')
-                                        <a 
-                                            title="Editar Ingreso" 
-                                            href="{{ route('ingresos.edit', $ingreso) }}" 
-                                            class="btn btn-warning btn-sm"
-                                        >
+                                    @hasrole('propietario|administrador')
+                                    @if ($ingreso->estado==1)
+                                        <a title="Editar Ingreso" href="{{ route('ingresos.edit', $ingreso) }}" 
+                                            class="btn btn-warning btn-sm">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
+                                        
+                                    @endif
                                     @endhasrole
 
                                 </td>

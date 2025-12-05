@@ -6,14 +6,22 @@ use App\Models\Almacen;
 use App\Models\DetalleIngreso;
 use App\Models\Ingreso;
 use App\Models\Pedido;
+use App\Models\Producto;
 use App\Models\TipoIngreso;
 use App\Models\User;
 use App\Models\Vehiculo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class IngresoController extends Controller
 {
+    /**
+     * ESTADO = 1 : EMITIDO
+     * ESTADO = 2 : COMPLETADO
+     * ESTADO = 3 : ANULADO
+     */
+
     private $proveedores = [
         ['id' => 1, 'nombre' => 'Proveedor 1'],
         ['id' => 2, 'nombre' => 'Proveedor 2'],
@@ -146,7 +154,7 @@ class IngresoController extends Controller
             'fecha' => $request->fecha,
             'fecha_min' => $request->fecha_min,
             'fecha_max' => $request->fecha_max,
-            'estado' => 1, // PENDIENTE
+            'estado' => 1, // EMITIDO
             'almacen_id' => $request->almacen_id,
             'operador_id' => $request->operador_id,
             'transportista_id' => $request->transportista_id,
@@ -176,7 +184,31 @@ class IngresoController extends Controller
      */
     public function show(Ingreso $ingreso)
     {
-        //
+        // Cargamos las relaciones necesarias
+        $ingreso->load([
+            'almacen:id,nombre',
+            'operador:id,full_name',
+            'transportista:id,full_name',
+            'administrador:id,full_name',
+            'vehiculo:id,placa_identificacion',
+            'tipoIngreso:id,nombre',
+            'pedido:id,codigo_comprobante',
+            'detalles.producto:id,nombre'
+        ]);
+
+        // Cálculo del monto total del ingreso
+        $monto_total = $ingreso->detalles->sum(function ($d) {
+            return $d->cant_ingreso * $d->precio;
+        });
+
+        // Proveedores del sistema
+        $proveedores = $this->proveedores;
+
+        // Encontrar proveedor por id
+        $proveedor_nombre = collect($proveedores)
+            ->firstWhere('id', $ingreso->proveedor_id)['nombre'] ?? 'No definido';
+
+        return view('ingresos.show', compact('ingreso', 'monto_total', 'proveedor_nombre'));
     }
 
     /**
@@ -184,7 +216,67 @@ class IngresoController extends Controller
      */
     public function edit(Ingreso $ingreso)
     {
-        //
+        $user = Auth::user();
+
+        // Permisos: solo propietario o administrador
+        if (! $user->hasRole(['administrador', 'propietario'])) {
+            return back()->with('error', 'No tiene permisos para editar ingresos.');
+        }
+
+        // Validación adicional según rol
+        if ($user->hasRole('administrador') && $ingreso->administrador_id !== $user->id) {
+            return back()->with('error', 'No puede editar ingresos de otros administradores.');
+        }
+
+        if ($user->hasRole('propietario')) {
+            $adminsIds = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+
+            if (! $adminsIds->contains($ingreso->administrador_id)) {
+                return back()->with('error', 'Este ingreso no pertenece a sus administradores.');
+            }
+        }
+
+        // ✔ Cargar relaciones
+        $ingreso->load([
+            'detalles.producto',
+            'almacen',
+            'operador',
+            'transportista',
+            'vehiculo',
+            'tipoIngreso',
+            'pedido'
+        ]);
+        // dd($ingreso);
+
+        $productos = Producto::where('proveedor_id', $ingreso->proveedor_id)->get();
+        // dd($productos);
+        // Datos necesarios para el formulario
+        if ($user->hasRole('propietario')) {
+            $propietarioId = $user->id;
+        } else {
+            $propietarioId = $user->user_id;
+        }
+
+        $almacenes = Almacen::where('user_id', $propietarioId)->get();
+        // dd($almacenes);
+        $operadores = User::role('operador')->where('user_id', $propietarioId)->get();
+        $transportistas = User::role('transportista')->where('user_id', $propietarioId)->get();
+        $vehiculos = Vehiculo::all();
+        $tiposIngreso = TipoIngreso::all();
+        $proveedores = $this->proveedores;
+
+        return view('ingresos.edit', compact(
+            'ingreso',
+            'almacenes',
+            'operadores',
+            'transportistas',
+            'vehiculos',
+            'tiposIngreso',
+            'proveedores',
+            'productos'
+        ));
     }
 
     /**
@@ -192,14 +284,173 @@ class IngresoController extends Controller
      */
     public function update(Request $request, Ingreso $ingreso)
     {
-        //
+        $user = Auth::user();
+
+        // 🔐 Permisos de rol
+        if (! $user->hasRole(['administrador', 'propietario'])) {
+            return back()->with('error', 'No tiene permisos para actualizar ingresos.');
+        }
+
+        // 🔐 Restricción según rol
+        if ($user->hasRole('administrador') && $ingreso->administrador_id !== $user->id) {
+            return back()->with('error', 'No puede modificar ingresos que no registró.');
+        }
+
+        if ($user->hasRole('propietario')) {
+            $adminsIds = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+
+            if (! $adminsIds->contains($ingreso->administrador_id)) {
+                return back()->with('error', 'Este ingreso no pertenece a sus administradores.');
+            }
+        }
+
+        // 🔎 Validaciones
+        $validated = $request->validate([
+            'codigo_comprobante' => 'required|string',
+            'fecha'             => 'required|date',
+            'fecha_min'         => 'required|date',
+            'fecha_max'         => 'required|date|after_or_equal:fecha_min',
+
+            'almacen_id'        => 'required|exists:almacens,id',
+            'operador_id'       => 'required|exists:users,id',
+            'transportista_id'  => 'required|exists:users,id',
+            'proveedor_id'      => 'required',
+            'tipo_ingreso_id'   => 'required|exists:tipo_ingresos,id',
+            'vehiculo_id'       => 'nullable|exists:vehiculos,id',
+            'pedido_id'         => 'required|exists:pedidos,id',
+
+            'detalles'                     => 'required|array|min:1',
+            'detalles.*.producto_id'       => 'required|exists:productos,id',
+            'detalles.*.cant_ingreso'      => 'required|numeric|min:1',
+            'detalles.*.precio'            => ['required', 'numeric', 'regex:/^\d+(\.\d{1,4})?$/'],
+        ]);
+
+        // ✔ Actualizar ingreso
+        $ingreso->update([
+            'codigo_comprobante' => $request->codigo_comprobante,
+            'fecha' => $request->fecha,
+            'fecha_min' => $request->fecha_min,
+            'fecha_max' => $request->fecha_max,
+            'almacen_id' => $request->almacen_id,
+            'operador_id' => $request->operador_id,
+            'transportista_id' => $request->transportista_id,
+            'proveedor_id' => $request->proveedor_id,
+            'pedido_id' => $request->pedido_id,
+            'tipo_ingreso_id' => $request->tipo_ingreso_id,
+            'vehiculo_id' => $request->vehiculo_id,
+        ]);
+
+        // ✔ Eliminar detalle anterior
+        DetalleIngreso::where('ingreso_id', $ingreso->id)->delete();
+
+        // ✔ Registrar nuevo detalle
+        foreach ($request->detalles as $d) {
+            DetalleIngreso::create([
+                'ingreso_id' => $ingreso->id,
+                'producto_id' => $d['producto_id'],
+                'cant_ingreso' => $d['cant_ingreso'],
+                'precio' => $d['precio'],
+            ]);
+        }
+
+        return redirect()->route('ingresos.index')
+            ->with('success', 'Ingreso actualizado correctamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Ingreso $ingreso)
+    public function cambiarEstado(Request $request, Ingreso $ingreso)
     {
-        //
+        $user = Auth::user();
+
+        // Solo administrador o propietario
+        if (! $user->hasRole(['administrador', 'propietario'])) {
+            return back()->with('error', 'No tiene permisos para cambiar el estado.');
+        }
+
+        // Restricción por rol administrador
+        if ($user->hasRole('administrador') && $ingreso->administrador_id !== $user->id) {
+            return back()->with('error', 'No puede modificar ingresos que no registró.');
+        }
+
+        // Restricción por rol propietario
+        if ($user->hasRole('propietario')) {
+            $adminsIds = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+
+            if (! $adminsIds->contains($ingreso->administrador_id)) {
+                return back()->with('error', 'Este ingreso no pertenece a sus administradores.');
+            }
+        }
+
+        // Debe estar en estado emitido
+        if ($ingreso->estado != 1) {
+            return back()->with('error', 'Solo los ingresos EMITIDOS pueden cambiar de estado.');
+        }
+
+        // Validar acción
+        $validated = $request->validate([
+            'accion' => 'required|in:confirmar,anular'
+        ]);
+
+        if ($request->accion === 'confirmar') {
+            $ingreso->estado = 2; // CONFIRMADO
+        }
+
+        if ($request->accion === 'anular') {
+            $ingreso->estado = 0; // ANULADO
+        }
+
+        $ingreso->save();
+
+        return back()->with('success', 'Estado del ingreso actualizado.');
+    }
+
+
+    public function pdf(Ingreso $ingreso)
+    {
+        $ingreso->load([
+            'almacen:id,nombre',
+            'operador:id,full_name',
+            'transportista:id,full_name',
+            'administrador:id,full_name',
+            'vehiculo:id,placa_identificacion',
+            'tipoIngreso:id,nombre',
+            'pedido:id,codigo_comprobante',
+            'detalles.producto:id,nombre,unidad_medida_id',
+            'detalles.producto.unidadMedida:id,cod_unidad_medida'
+        ]);
+
+        $monto_total = $ingreso->detalles->sum(fn($d) => $d->cant_ingreso * $d->precio);
+
+        $proveedores = $this->proveedores;
+        $empresa = User::find(Auth::user()->user_id);
+        $propietario = User::find(Auth::user()->user_id);
+        $proveedor_nombre = collect($proveedores)
+            ->firstWhere('id', $ingreso->proveedor_id)['nombre'] ?? 'No definido';
+
+        $pdf = Pdf::loadView('ingresos.comprobante-pdf', [
+            'ingreso'          => $ingreso,
+            'monto_total'      => $monto_total,
+            'proveedor_nombre' => $proveedor_nombre,
+            'empresa'          => $empresa,
+            'propietario'      => $propietario,
+        ])->setPaper('letter', 'portrait');
+
+        // Agregar footer con firma y numeración
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->get_canvas();
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+
+        // Texto izquierda (administrador + fecha)
+        $canvas->page_text(25, $h - 35, "Solicitado por: " . ($ingreso->administrador->full_name ?? '-') .
+            "    |    Fecha: " . now()->format('d/m/Y'), null, 9, [0, 0, 0]);
+
+        // Numeración derecha
+        $canvas->page_text($w - 120, $h - 35, "Página {PAGE_NUM} de {PAGE_COUNT}", null, 9, [0, 0, 0]);
+
+        return $pdf->stream("Ingreso-{$ingreso->codigo_comprobante}.pdf");
     }
 }

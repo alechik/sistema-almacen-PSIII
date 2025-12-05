@@ -58,7 +58,7 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Pedido (Estado 3)</label>
+                                <label class="form-label fw-bold">Pedido (Estado TERMINADO 3)</label>
                                 <select id="pedidoSelect" name="pedido_id" class="form-select">
                                     <option value="">Seleccione...</option>
                                     @foreach($pedidos as $p)
