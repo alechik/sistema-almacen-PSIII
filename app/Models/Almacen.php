@@ -37,15 +37,15 @@ class Almacen extends Model
     }
 
     // Relación a productos, ingresos, salidas, pedidos, etc.
-    // public function ingresos()
-    // {
-    //     return $this->hasMany(Ingreso::class);
-    // }
+    public function ingresos()
+    {
+        return $this->hasMany(Ingreso::class);
+    }
 
-    // public function salidas()
-    // {
-    //     return $this->hasMany(Salida::class);
-    // }
+    public function salidas()
+    {
+        return $this->hasMany(Salida::class);
+    }
 
     public function pedidos()
     {

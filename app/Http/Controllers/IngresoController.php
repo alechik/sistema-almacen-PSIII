@@ -21,7 +21,7 @@ class IngresoController extends Controller
      * ESTADO = 2 : COMPLETADO
      * ESTADO = 3 : ANULADO
      */
-
+    //CONSUMIR APIS DE PROVEEDORES EXTERNOS
     private $proveedores = [
         ['id' => 1, 'nombre' => 'Proveedor 1'],
         ['id' => 2, 'nombre' => 'Proveedor 2'],
@@ -93,7 +93,7 @@ class IngresoController extends Controller
         }
 
         // Obtener pedidos confirmados (estado = 3)
-        $pedidos = Pedido::where('estado', 3)
+        $pedidos = Pedido::where('estado', 2)
             ->whereDoesntHave('ingreso')   // el pedido NO debe tener ingreso
             ->with(['detalles.producto', 'almacen'])
             ->get();

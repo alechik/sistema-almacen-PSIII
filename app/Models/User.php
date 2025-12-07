@@ -96,8 +96,4 @@ class User extends Authenticatable
         return $this->hasRole('propietario');
     }
 
-    public function isTrabajador()
-    {
-        return $this->hasRole('trabajador');
-    }
 }

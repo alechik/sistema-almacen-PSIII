@@ -6,7 +6,9 @@ use App\Http\Controllers\IngresoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SalidaController;
 use App\Http\Controllers\TipoIngresoController;
 use App\Http\Controllers\TipoSalidaController;
 use App\Http\Controllers\UnidadMedidaController;
@@ -162,4 +164,35 @@ Route::middleware(['auth'])->group(function () {
     // imprimir comprobante en PDF
     Route::get('/ingresos/{ingreso}/pdf', [IngresoController::class, 'pdf'])
         ->name('ingresos.pdf');
+});
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/salidas', [SalidaController::class, 'index'])->name('salidas.index');
+    Route::get('/salidas/create', [SalidaController::class, 'create'])->name('salidas.create');
+    Route::post('/salidas', [SalidaController::class, 'store'])->name('salidas.store');
+
+    Route::get('/salidas/{salida}', [SalidaController::class, 'show'])->name('salidas.show');
+    Route::get('/salidas/{salida}/edit', [SalidaController::class, 'edit'])->name('salidas.edit');
+    Route::put('/salidas/{salida}', [SalidaController::class, 'update'])->name('salidas.update');
+
+    Route::delete('/salidas/{salida}', [SalidaController::class, 'destroy'])->name('salidas.destroy');
+
+    Route::put('/salidas/{salida}/estado', [SalidaController::class, 'cambiarEstado'])
+        ->name('salidas.cambiarEstado');
+
+    Route::get('/salidas/{salida}/pdf', [SalidaController::class, 'pdf'])
+        ->name('salidas.pdf');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('reportes')->group(function () {
+        Route::get('/', [ReporteController::class, 'index'])->name('reportes.index');
+        Route::get('/salidas', [ReporteController::class, 'salidas'])->name('reportes.salidas');
+        Route::get('/ingresos', [ReporteController::class, 'ingresos'])->name('reportes.ingresos');
+
+        // PDF
+        Route::get('/salidas/pdf', [ReporteController::class, 'salidasPdf'])->name('reportes.salidas.pdf');
+        Route::get('/ingresos/pdf', [ReporteController::class, 'ingresosPdf'])->name('reportes.ingresos.pdf');
+    });
 });
