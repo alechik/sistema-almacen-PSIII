@@ -96,4 +96,9 @@ class User extends Authenticatable
         return $this->hasRole('propietario');
     }
 
+    // Scope para obtener solo usuarios con rol propietario
+    public function scopePropietarios($query)
+    {
+        return $query->role('propietario'); // Spatie permite filtrar así
+    }
 }

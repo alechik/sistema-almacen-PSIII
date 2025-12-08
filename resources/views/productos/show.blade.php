@@ -28,7 +28,7 @@
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Información del Producto</h3>
-                    <a href="{{ route('productos.index') }}" class="btn btn-secondary btn-sm ms-auto">
+                    <a href="{{ url()->previous() }}" class="btn btn-secondary btn-sm ms-auto">
                         <i class="fas fa-arrow-left"></i> Volver
                     </a>
                 </div>

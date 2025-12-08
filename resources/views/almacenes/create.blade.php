@@ -1,6 +1,10 @@
 @extends('dashboard-layouts.header-footer')
 @section('content')
-
+@push('styles')
+<!-- Leaflet CSS -->
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
 <main class="app-main">
 
     <!-- Header -->
@@ -113,6 +117,11 @@
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <!-- MAPA PARA SELECCIONAR UBICACIÓN -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Ubicación en el Mapa</label>
+                                <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+                            </div>
 
                             <!-- Teléfono -->
                             <div class="col-md-4 mb-3">
@@ -164,5 +173,79 @@
     </div>
 
 </main>
+@push('scripts')
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Coordenadas por defecto en caso de que el usuario no acepte geolocalización
+    var defaultLat = -17.4000;
+    var defaultLng = -66.1653;
+
+    // Crear mapa con coordenadas temporales
+    var map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+    // Cargar mapa base
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    // Crear marcador vacío
+    var marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+    // ---------------------------------------------------------
+    // 1️⃣ INTENTAR OBTENER UBICACIÓN REAL DEL USUARIO
+    // ---------------------------------------------------------
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                var lat = pos.coords.latitude.toFixed(6);
+                var lng = pos.coords.longitude.toFixed(6);
+
+                // Mover mapa a ubicación real
+                map.setView([lat, lng], 16);
+
+                // Ubicar marcador en mi posición
+                marker.setLatLng([lat, lng]);
+
+                // Llenar inputs
+                document.querySelector("input[name='latitud']").value = lat;
+                document.querySelector("input[name='longitud']").value = lng;
+            },
+            function (err) {
+                console.warn("Error de geolocalización:", err.message);
+                // Si falla, simplemente se usa la posición por defecto
+            }
+        );
+    }
+
+    // ---------------------------------------------------------
+    // 2️⃣ AL MOVER EL MARCADOR (DRAG)
+    // ---------------------------------------------------------
+    marker.on('dragend', function () {
+        var lat = marker.getLatLng().lat.toFixed(6);
+        var lng = marker.getLatLng().lng.toFixed(6);
+        document.querySelector("input[name='latitud']").value = lat;
+        document.querySelector("input[name='longitud']").value = lng;
+    });
+
+    // ---------------------------------------------------------
+    // 3️⃣ AL HACER CLICK EN EL MAPA
+    // ---------------------------------------------------------
+    map.on('click', function (e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lng = e.latlng.lng.toFixed(6);
+        marker.setLatLng([lat, lng]);
+
+        document.querySelector("input[name='latitud']").value = lat;
+        document.querySelector("input[name='longitud']").value = lng;
+    });
+});
+</script>
+
+
+@endpush
 
 @endsection

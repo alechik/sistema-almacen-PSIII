@@ -166,13 +166,13 @@
             alt="User Image"
             />
             <p>
-            Alexander Pierce - Web Developer
-            <small>Member since Nov. 2023</small>
+            {{ Auth::user()->name }}
+            <small>Member since {{ Auth::user()->created_at->format('d M. Y') }}</small>
             </p>
         </li>
         <!--end::User Image-->
         <!--begin::Menu Body-->
-        <li class="user-body">
+        <li class="user-body" hidden>
             <!--begin::Row-->
             <div class="row">
             <div class="col-4 text-center"><a href="#">Followers</a></div>
@@ -184,12 +184,12 @@
         <!--end::Menu Body-->
         <!--begin::Menu Footer-->
         <li class="user-footer">
-            <a href="#" class="btn btn-default btn-flat">Profile</a>
+            <a href="{{ route('users.edittwo', Auth::user()->id) }}" class="btn btn-default btn-flat">Perfil</a>
             <!-- Botón de Logout -->
             <form method="POST" action="{{ route('logout') }}" style="display:inline;">
                 @csrf
                 <button type="submit" class="btn btn-default btn-flat float-end">
-                    Sign out
+                    Cerrar Sesión
                 </button>
             </form>
         </li>

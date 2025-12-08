@@ -44,10 +44,12 @@
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Lista de Usuarios</h3>
-
-                    <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm ms-auto">
-                        <i class="fas fa-user-plus"></i> Nuevo Usuario
-                    </a>
+                    @if (auth()->user()->hasAnyRole(['admin','administrador', 'propietario']))
+                        
+                        <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm ms-auto">
+                            <i class="fas fa-user-plus"></i> Nuevo Usuario
+                        </a>
+                    @endif
                 </div>
 
                 <div class="card-body p-0">
@@ -91,19 +93,22 @@
                                     <a href="{{ route('users.show', $user) }}" class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
+                                    @if (auth()->user()->hasAnyRole(['admin', 'propietario']))
 
-                                    <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
+                                        <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
 
-                                    <button type="button"
-                                        class="btn btn-danger btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalEliminar"
-                                        data-id="{{ $user->id }}"
-                                        data-nombre="{{ $user->full_name }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                        <button type="button"
+                                            class="btn btn-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalEliminar"
+                                            data-id="{{ $user->id }}"
+                                            data-nombre="{{ $user->full_name }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        
+                                    @endif
 
                                 </td>
                             </tr>

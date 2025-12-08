@@ -85,6 +85,8 @@ class IngresoController extends Controller
      */
     public function create()
     {
+        // APIS DE VUNTOS DE VENTA EXTERNOS QUE LISTE LAS NOTAS DE VENTAS CONFIRMADAS
+        // JSON
         $admin = Auth::user();
 
         // Solo administradores pueden registrar ingresos

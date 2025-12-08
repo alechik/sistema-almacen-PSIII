@@ -58,10 +58,12 @@
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Lista de Roles</h3>
-
-                    <a href="{{ route('roles.create') }}" class="btn btn-primary btn-sm ms-auto">
-                        <i class="fas fa-plus"></i> Nuevo Rol
-                    </a>
+                    @if (auth()->user()->hasAnyRole(['administrador', 'propietario']))
+                        <a href="{{ route('roles.create') }}" class="btn btn-primary btn-sm ms-auto">
+                            <i class="fas fa-plus"></i> Nuevo Rol
+                        </a>
+                        
+                    @endif
                 </div>
 
                 <div class="card-body p-0">
@@ -82,27 +84,29 @@
                                 <td>{{ $role->name }}</td>
 
                                 <td class="text-center">
-
                                     <a href="{{ route('roles.show', $role) }}" 
-                                       class="btn btn-info btn-sm">
+                                    class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
+                                    @if (auth()->user()->hasAnyRole(['admin', 'propietario']))
+                                        
 
-                                    <a href="{{ route('roles.edit', $role) }}" 
-                                       class="btn btn-warning btn-sm">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
+                                        <a href="{{ route('roles.edit', $role) }}" 
+                                        class="btn btn-warning btn-sm">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
 
-                                    <!-- Botón Eliminar -->
-                                    <button 
-                                        type="button"
-                                        class="btn btn-danger btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalEliminar"
-                                        data-id="{{ $role->id }}"
-                                        data-nombre="{{ $role->name }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                        <!-- Botón Eliminar -->
+                                        <button 
+                                            type="button"
+                                            class="btn btn-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalEliminar"
+                                            data-id="{{ $role->id }}"
+                                            data-nombre="{{ $role->name }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    @endif
 
                                 </td>
                             </tr>

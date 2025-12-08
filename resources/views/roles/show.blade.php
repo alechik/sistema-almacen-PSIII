@@ -31,15 +31,18 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Información del Rol</h3>
 
-                    <div class="ms-auto">
-                        <a href="{{ route('roles.edit', $role) }}" class="btn btn-warning btn-sm">
-                            <i class="bi bi-pencil-square"></i> Editar
-                        </a>
+                    @if (auth()->user()->hasAnyRole(['administrador', 'propietario']))
+                        <div class="ms-auto">
+                            <a href="{{ route('roles.edit', $role) }}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </a>
 
-                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar">
-                            <i class="bi bi-trash"></i> Eliminar
-                        </button>
-                    </div>
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                        
+                    @endif
                 </div>
 
                 <div class="card-body">

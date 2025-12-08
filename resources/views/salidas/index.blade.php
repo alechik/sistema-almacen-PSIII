@@ -90,26 +90,27 @@
                                         @hasrole('administrador|propietario')
                                             @if ($s->estado == 1)
 
-                                                <form action="{{ route('salidas.cambiarEstado', $s) }}"
-                                                      method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <input type="hidden" name="accion" value="confirmar">
-                                                    <button class="btn btn-success btn-sm" title="Confirmar">
-                                                        <i class="bi bi-check2-circle"></i>
-                                                    </button>
-                                                </form>
+                                                <!-- Botón abrir modal Confirmar -->
+                                                <button
+                                                    class="btn btn-success btn-sm"
+                                                    title="Confirmar"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalConfirmar"
+                                                    data-id="{{ $s->id }}"
+                                                >
+                                                    <i class="bi bi-check2-circle"></i>
+                                                </button>
 
-                                                <form action="{{ route('salidas.cambiarEstado', $s) }}"
-                                                      method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <input type="hidden" name="accion" value="anular">
-                                                    <button class="btn btn-danger btn-sm" title="Anular">
-                                                        <i class="bi bi-x-circle"></i>
-                                                    </button>
-                                                </form>
-
+                                                <!-- Botón abrir modal Anular -->
+                                                <button
+                                                    class="btn btn-danger btn-sm"
+                                                    title="Anular"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalAnular"
+                                                    data-id="{{ $s->id }}"
+                                                >
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
                                             @endif
                                         @endhasrole
 
@@ -153,5 +154,90 @@
         </div>
     </div>
 
+<!-- Modal Confirmar -->
+<div class="modal fade" id="modalConfirmar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Confirmar Salida</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        ¿Está seguro de confirmar esta salida? <br>
+        <strong>Esta acción no se podrá revertir.</strong>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+        <form id="formConfirmar" method="POST" class="d-inline">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="accion" value="confirmar">
+            <button class="btn btn-success">Confirmar</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Modal Anular -->
+<div class="modal fade" id="modalAnular" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Anular Salida</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        ¿Desea anular esta salida?<br>
+        <strong>Una vez anulada, no se podrá revertir.</strong>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+        <form id="formAnular" method="POST" class="d-inline">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="accion" value="anular">
+            <button class="btn btn-danger">Anular</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </main>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Modal Confirmar
+    var modalConfirmar = document.getElementById('modalConfirmar');
+    modalConfirmar.addEventListener('show.bs.modal', function (event) {
+        var boton = event.relatedTarget;
+        var id = boton.getAttribute('data-id');
+        document.getElementById('formConfirmar').action =
+            "/salidas/" + id + "/cambiar-estado";
+    });
+
+    // Modal Anular
+    var modalAnular = document.getElementById('modalAnular');
+    modalAnular.addEventListener('show.bs.modal', function (event) {
+        var boton = event.relatedTarget;
+        var id = boton.getAttribute('data-id');
+        document.getElementById('formAnular').action =
+            "/salidas/" + id + "/cambiar-estado";
+    });
+
+});
+</script>
+@endpush
+
 @endsection

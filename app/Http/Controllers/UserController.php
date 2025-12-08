@@ -19,14 +19,9 @@ class UserController extends Controller
         if ($user->hasRole('admin')) {
             // dd($user);
             // $users = User::where('id', $user->id)->paginate(10);
-            $users = User::where('id', '!=', $user->id)->orWhere('id', $user->id)->paginate(10);
+            $users = User::propietarios()->paginate(10);
         } elseif ($user->hasRole('propietario')) {
-            $users = User::where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhereHas('parent', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    });
-            })->paginate(10);
+            $users = User::where('user_id', $user->id)->paginate(10);
         } else {
             $users = User::where('id', $user->id)->paginate(10);
         }
@@ -126,9 +121,6 @@ class UserController extends Controller
         return view('users.show', compact('user', 'roles'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(User $user)
     {
         $auth = Auth::user();
@@ -154,9 +146,6 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'roles'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, User $user)
     {
         $auth = Auth::user();
@@ -242,5 +231,73 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', "Usuario {$estadoMensaje} correctamente.");
+    }
+
+    public function edittwo(User $user)
+    {
+        // dd($user);
+        $auth = Auth::user();
+
+        $roles=[$user->roles->first()->name];
+        // dd($roles); 
+
+        return view('users.edittwo', compact('user', 'roles'));
+    }
+
+    public function updatetwo(Request $request, User $user)
+    {
+        $auth = Auth::user();
+
+        // // Roles permitidos según quien edita
+        // if ($auth->hasRole('admin')) {
+        //     $availableRoles = ['propietario'];
+        // } elseif ($auth->hasRole('propietario')) {
+        //     $availableRoles = ['administrador', 'operador', 'transportista'];
+        // } else {
+        //     $availableRoles = [$user->roles->first()->name];
+        // }
+
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'name' => 'required|string|max:100|unique:users,name,' . $user->id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'company' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
+            'password' => 'nullable|min:6',
+            // 'role' => 'required|in:' . implode(',', $availableRoles),
+        ]);
+
+        // Actualización base
+        $user->update([
+            'full_name' => $request->full_name,
+            'name' => $request->name,
+            'email' => $request->email,
+            'company' => $request->company,
+            'phone_number' => $request->phone_number,
+            'estado' => $user->estado,
+        ]);
+
+        // Si cambia contraseña
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => bcrypt($request->password)
+            ]);
+        }
+
+        // Actualizar Rol
+        // if ($auth->hasRole('admin') || $auth->hasRole('propietario')) {
+        //     $user->syncRoles([$request->role]);
+        // }
+
+        // Redirecciones dinámicas
+        if ($auth->hasRole(['admin', 'propietario'])) {
+            return redirect()->route('dashboard')->with('success', 'Perfil actualizado correctamente');
+        }
+        if ($auth->hasRole('admin')) {
+            dd( 'llego admin');
+            return redirect()->route('dashboard')->with('success', 'Perfil actualizado correctamente');
+        }
+
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente');
     }
 }

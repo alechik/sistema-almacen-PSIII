@@ -1,6 +1,11 @@
 @extends('dashboard-layouts.header-footer')
 @section('content')
-
+@push('styles')
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+@endpush
 <main class="app-main">
 
     <!-- Header -->
@@ -126,6 +131,15 @@
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="col-md-12 mb-6">
+                                {{-- <label class="form-label">Ubicación en el Mapa</label> --}}
+                                <!-- Botón Detectar ubicación -->
+                                <button type="button" id="btnDetectar" class="btn btn-success btn-sm mb-2">
+                                    <i class="fas fa-location-arrow"></i> Detectar mi ubicación
+                                </button>
+
+                                <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+                            </div>
 
                             <!-- Celular -->
                             <div class="col-md-4 mb-3">
@@ -177,5 +191,115 @@
     </div>
 
 </main>
+
+@push('scripts')
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- jQuery (debe ir antes que Toastr) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Coordenadas del almacén desde Laravel
+    var almacenLat = "{{ $almacen->latitud }}";
+    var almacenLng = "{{ $almacen->longitud }}";
+
+    // Coordenadas por defecto si no hay datos
+    var defaultLat = -17.4000;
+    var defaultLng = -66.1653;
+
+    // Determinar el punto inicial del mapa
+    var initialLat = almacenLat ? parseFloat(almacenLat) : defaultLat;
+    var initialLng = almacenLng ? parseFloat(almacenLng) : defaultLng;
+
+    // Crear mapa
+    var map = L.map('map').setView([initialLat, initialLng], 14);
+
+    // Mapa base
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    // Crear marcador
+    var marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+
+    // Si el almacén NO tiene coordenadas → usar ubicación real
+    if (!almacenLat || !almacenLng) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    var lat = pos.coords.latitude.toFixed(6);
+                    var lng = pos.coords.longitude.toFixed(6);
+
+                    map.setView([lat, lng], 16);
+                    marker.setLatLng([lat, lng]);
+
+                    document.querySelector("input[name='latitud']").value = lat;
+                    document.querySelector("input[name='longitud']").value = lng;
+                },
+                function (err) {
+                    console.warn("No se pudo obtener la ubicación:", err.message);
+                }
+            );
+        }
+    }
+
+    // 1️⃣ Al mover el marcador
+    marker.on('dragend', function () {
+        var lat = marker.getLatLng().lat.toFixed(6);
+        var lng = marker.getLatLng().lng.toFixed(6);
+        document.querySelector("input[name='latitud']").value = lat;
+        document.querySelector("input[name='longitud']").value = lng;
+    });
+
+    // 2️⃣ Al hacer click en el mapa
+    map.on('click', function (e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lng = e.latlng.lng.toFixed(6);
+        marker.setLatLng([lat, lng]);
+
+        document.querySelector("input[name='latitud']").value = lat;
+        document.querySelector("input[name='longitud']").value = lng;
+    });
+
+// BOTÓN: DETECTAR MI UBICACIÓN
+document.getElementById("btnDetectar").addEventListener("click", function () {
+
+    if (!navigator.geolocation) {
+        alert("La geolocalización no está habilitada en este navegador.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function (pos) {
+            var lat = pos.coords.latitude.toFixed(6);
+            var lng = pos.coords.longitude.toFixed(6);
+
+            // Mover el mapa y el marcador
+            map.setView([lat, lng], 16);
+            marker.setLatLng([lat, lng]);
+
+            // Rellenar inputs
+            document.querySelector("input[name='latitud']").value = lat;
+            document.querySelector("input[name='longitud']").value = lng;
+
+            // Mensaje opcional
+            toastr.success("Ubicación detectada correctamente.");
+        },
+        function (err) {
+            alert("Error al obtener tu ubicación: " + err.message);
+        }
+    );
+});
+
+
+});
+</script>
+
+
+
+@endpush
 
 @endsection

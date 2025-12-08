@@ -85,7 +85,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Código Comprobante</label>
                                 <input type="text" name="codigo_comprobante" class="form-control"
-                                    value="{{ (Auth::user()->user_id ?? Auth::user()->id) * 1000000 + (($lastId ?? 0) + 1) }}"
+                                    value="{{ 'I'. (Auth::user()->user_id ?? Auth::user()->id) * 1000000 + (($lastId ?? 0) + 1) }}"
                                     readonly>
                             </div>
 

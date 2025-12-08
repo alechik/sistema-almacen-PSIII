@@ -131,7 +131,7 @@
                                 <label class="form-label">Stock</label>
                                 <input type="number" step="0.01" name="stock"
                                        class="form-control"
-                                       value="{{ old('stock', $producto->stock) }}">
+                                       value="{{ old('stock', $producto->stock) }}" readonly>
                             </div>
 
                             <!-- Stock mínimo -->
@@ -139,7 +139,7 @@
                                 <label class="form-label">Stock mínimo</label>
                                 <input type="number" step="0.01" name="stock_minimo"
                                        class="form-control"
-                                       value="{{ old('stock_minimo', $producto->stock_minimo) }}">
+                                       value="{{ old('stock_minimo', $producto->stock_minimo) }}" readonly>
                             </div>
 
                             <!-- Precio -->
@@ -147,7 +147,7 @@
                                 <label class="form-label">Precio</label>
                                 <input type="number" step="0.01" name="precio"
                                        class="form-control"
-                                       value="{{ old('precio', $producto->precio) }}">
+                                       value="{{ old('precio', $producto->precio) }}" readonly>
                             </div>
 
                             <!-- Fecha Vencimiento -->

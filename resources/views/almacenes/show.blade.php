@@ -1,6 +1,11 @@
 @extends('dashboard-layouts.header-footer')
 @section('content')
 
+@push('styles')
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
+
 <main class="app-main">
 
     <!-- Header -->
@@ -24,7 +29,7 @@
     <div class="app-content">
         <div class="container-fluid">
 
-            <div class="card">
+            <div class="card shadow-sm">
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Información del Almacén</h3>
@@ -35,7 +40,6 @@
                 </div>
 
                 <div class="card-body">
-
                     <div class="row">
 
                         <!-- Nombre -->
@@ -47,20 +51,15 @@
                         <!-- Estado -->
                         <div class="col-md-6 mb-3">
                             <label class="fw-bold">Estado:</label>
-                            <p>
-                                @php
-                                    $badgeClass = match($almacen->estado) {
-                                        'ACTIVADO' => 'badge bg-success',
-                                        'DESACTIVADO' => 'badge bg-warning',
-                                        'CERRADO' => 'badge bg-danger',
-                                        default => 'badge bg-secondary'
-                                    };
-                                @endphp
-
-                                <span class="{{ $badgeClass }}">
-                                    {{ $almacen->estado }}
-                                </span>
-                            </p>
+                            @php
+                                $badgeClass = match($almacen->estado) {
+                                    'ACTIVADO' => 'badge bg-success',
+                                    'DESACTIVADO' => 'badge bg-warning',
+                                    'CERRADO' => 'badge bg-danger',
+                                    default => 'badge bg-secondary'
+                                };
+                            @endphp
+                            <p><span class="{{ $badgeClass }}">{{ $almacen->estado }}</span></p>
                         </div>
 
                         <!-- Ubicación -->
@@ -69,25 +68,12 @@
                             <p>{{ $almacen->ubicacion ?? '—' }}</p>
                         </div>
 
-                        <!-- Longitud -->
-                        <div class="col-md-4 mb-3">
-                            <label class="fw-bold">Longitud:</label>
-                            <p>{{ $almacen->longitud ?? '—' }}</p>
-                        </div>
-
-                        <!-- Latitud -->
-                        <div class="col-md-4 mb-3">
-                            <label class="fw-bold">Latitud:</label>
-                            <p>{{ $almacen->latitud ?? '—' }}</p>
-                        </div>
-
-                        <!-- Celular -->
+                        <!-- Contactos -->
                         <div class="col-md-4 mb-3">
                             <label class="fw-bold">Celular:</label>
                             <p>{{ $almacen->cellphone ?? '—' }}</p>
                         </div>
 
-                        <!-- Email -->
                         <div class="col-md-6 mb-3">
                             <label class="fw-bold">Email:</label>
                             <p>{{ $almacen->email ?? '—' }}</p>
@@ -100,10 +86,21 @@
                         </div>
 
                         <!-- Usuario Creador -->
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-12 mb-4">
                             <label class="fw-bold">Registrado por:</label>
                             <p>{{ $almacen->user->name ?? '—' }}</p>
                         </div>
+
+                        <!-- Mapa -->
+                        @if($almacen->latitud && $almacen->longitud)
+                        <div class="col-md-12">
+                            <label class="fw-bold">Ubicación en el Mapa:</label>
+
+                            <div id="mapShow"
+                                style="height: 250px; width: 100%; border-radius: 8px; border: 1px solid #ccc;">
+                            </div>
+                        </div>
+                        @endif
 
                     </div>
                 </div>
@@ -114,7 +111,7 @@
                     </a>
 
                     <form action="{{ route('almacenes.destroy', $almacen->id) }}" method="POST"
-                          onsubmit="return confirm('¿Eliminar este almacén?')">
+                        onsubmit="return confirm('¿Eliminar este almacén?')">
                         @csrf
                         @method('DELETE')
 
@@ -125,10 +122,37 @@
                 </div>
 
             </div>
-
         </div>
     </div>
 
 </main>
 
 @endsection
+
+@push('scripts')
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+@if($almacen->latitud && $almacen->longitud)
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    var lat = parseFloat("{{ $almacen->latitud }}");
+    var lng = parseFloat("{{ $almacen->longitud }}");
+
+    // Crear mapa
+    var map = L.map('mapShow').setView([lat, lng], 16);
+
+    // Capa base
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18
+    }).addTo(map);
+
+    // Marcador
+    L.marker([lat, lng]).addTo(map)
+        .bindPopup("{{ $almacen->nombre }}")
+        .openPopup();
+});
+</script>
+@endif
+@endpush

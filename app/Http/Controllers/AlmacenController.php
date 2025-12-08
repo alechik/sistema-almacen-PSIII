@@ -49,8 +49,8 @@ class AlmacenController extends Controller
             'email'       => 'nullable|email|max:150',
             'estado' => 'required|in:ACTIVADO,DESACTIVADO,CERRADO',
             'ubicacion'   => 'nullable',
-            'longitud'    => 'nullable|max:50',
-            'latitud'     => 'nullable|max:50',
+            'latitud'  => 'nullable|numeric|between:-90,90',
+            'longitud' => 'nullable|numeric|between:-180,180',
             'cellphone'   => 'nullable|max:50',
         ]);
 
@@ -98,11 +98,11 @@ class AlmacenController extends Controller
             'nombre' => 'required|string|max:150',
             'descripcion' => 'nullable|string',
             'ubicacion' => 'nullable|string|max:200',
-            'longitud' => 'nullable|string|max:50',
-            'latitud' => 'nullable|string|max:50',
+            'latitud'  => 'nullable|numeric|between:-90,90',
+            'longitud' => 'nullable|numeric|between:-180,180',
             'estado' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:120',
-            'cellhphone' => 'nullable|string|max:50',
+            'cellphone' => 'nullable|string|max:50',
         ]);
 
         $almacen->update($request->all());
