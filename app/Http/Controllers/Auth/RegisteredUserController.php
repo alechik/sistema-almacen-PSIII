@@ -14,6 +14,7 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    // ESTADOS:ACTIVO, PENDIENTE, NO ACTIVO
     /**
      * Display the registration view.
      */
@@ -30,21 +31,30 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
+            'full_name' => $request->full_name,
             'name' => $request->name,
             'email' => $request->email,
+            'company' => $request->company,
+            'phone_number' => $request->phone_number,
+            'estado' => 'PENDIENTE',
             'password' => Hash::make($request->password),
         ]);
+        // Asignar rol propietario
+        $user->assignRole('propietario');
 
         event(new Registered($user));
 
-        Auth::login($user);
+        return redirect()->route('login')->with('status', 'Tu cuenta fue creada y está en estado PENDIENTE. Un admin debe activarla.');
 
-        return redirect(route('dashboard', absolute: false));
+        // Auth::login($user);
+
+        // return redirect(route('dashboard', absolute: false));
     }
 }

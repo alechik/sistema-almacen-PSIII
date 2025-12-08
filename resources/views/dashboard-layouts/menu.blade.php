@@ -35,17 +35,19 @@
                 </p>
               </a>
               <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="{{route('almacenes.index')}}" class="nav-link {{ request()->routeIs('almacenes.*') ? 'active' : '' }}">
-                    <i class="nav-icon bi bi-building"></i>
-                    <p>ALMACEN</p>
-                  </a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('tiposalidas.*') ? 'menu-open' : '' }}">
+                @if (auth()->user()->hasAnyRole(['propietario']))
+                  <li class="nav-item">
+                    <a href="{{route('almacenes.index')}}" class="nav-link {{ request()->routeIs('almacenes.*') ? 'active' : '' }}">
+                      <i class="nav-icon bi bi-building"></i>
+                      <p>Almacén</p>
+                    </a>
+                  </li>
+                @endif
+                <li class="nav-item {{ request()->routeIs('tiposalidas.*','salidas.*') ? 'menu-open' : '' }}">
                   <a href="#" class="nav-link">
                     <i class="nav-icon bi bi-truck"></i>
                     <p>
-                      GESTION SALIDAS
+                      Gestión de salidas
                       <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                   </a>
@@ -54,14 +56,14 @@
                       <li class="nav-item">
                         <a href="{{route('salidas.create')}}" class="nav-link {{ request()->routeIs('salidas.create') ? 'active' : '' }}">
                           <i class="nav-icon bi bi-plus-circle"></i>
-                          <p>NUEVA SALIDA</p>
+                          <p>Nueva Salida</p>
                         </a>
                       </li>
                     @endif
                     <li class="nav-item">
                       <a href="{{route('salidas.index')}}" class="nav-link {{ request()->routeIs('salidas.index','salidas.edit','salidas.show') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-search"></i>
-                        <p>CONSULTAR SALIDAS</p>
+                        <p>Consultar salidas</p>
                       </a>
                     </li>
                     <li class="nav-item">
@@ -76,7 +78,7 @@
                   <a href="#" class="nav-link">
                     <i class="nav-icon bi bi-box-arrow-in-down"></i>
                     <p>
-                      GESTION INGRESOS
+                      Gestión de Ingresos
                       <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                   </a>
@@ -85,28 +87,28 @@
                       <li class="nav-item">
                         <a href="{{route('pedidos.create')}}" class="nav-link {{ request()->routeIs('pedidos.create') ? 'active' : '' }}">
                           <i class="nav-icon bi bi-file-earmark-plus"></i>
-                          <p>NUEVO PEDIDO</p>
+                          <p>Nuevo pedido</p>
                         </a>
                       </li>
                     @endif
                     <li class="nav-item">
                       <a href="{{route('pedidos.index')}}" class="nav-link {{ request()->routeIs('pedidos.index','pedidos.edit','pedidos.show') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-file-earmark-text"></i>
-                        <p>CONSULTAR PEDIDOS</p>
+                        <p>Consultar pedidos</p>
                       </a>
                     </li>
                     @if (auth()->user()->hasAnyRole(['administrador']))
                       <li class="nav-item">
                         <a href="{{route('ingresos.create')}}" class="nav-link {{ request()->routeIs('ingresos.create') ? 'active' : '' }}">
                           <i class="nav-icon bi bi-box-arrow-in-down"></i>
-                          <p>NUEVO INGRESO</p>
+                          <p>Nuevo ingreso</p>
                         </a>
                       </li>
                     @endif
                     <li class="nav-item">
                       <a href="{{route('ingresos.index')}}" class="nav-link">
                         <i class="nav-icon bi bi-journals"></i>
-                        <p>CONSULTAR INGRESOS</p>
+                        <p>Consultar ingresos</p>
                       </a>
                     </li>
                     <li class="nav-item">
@@ -121,7 +123,7 @@
                   <a href="#" class="nav-link">
                     <i class="nav-icon bi bi-tags"></i>
                     <p>
-                      GESTION ARTICULOS
+                      Gestión Artículos
                       <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                   </a>
@@ -149,7 +151,7 @@
                 <li class="nav-item">
                   <a href="{{route('vehiculos.index')}}" class="nav-link {{ request()->routeIs('vehiculos.*') ? 'active' : '' }}">
                     <i class="nav-icon bi bi-truck-front-fill"></i>
-                    <p>VEHICULOS</p>
+                    <p>Vehículos</p>
                   </a>
                 </li>
               </ul>
@@ -169,7 +171,7 @@
                   <a href="#" class="nav-link">
                     <i class="nav-icon bi bi-gear-fill"></i>
                     <p>
-                      GESTION USUARIOS
+                      Gestión de usuarios
                       <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                   </a>
@@ -205,7 +207,7 @@
                   <a href="#" class="nav-link">
                     <i class="nav-icon bi bi-file-bar-graph"></i>
                     <p>
-                      INFORMES DE ALMACEN
+                      Informes de almacén
                       <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                   </a>

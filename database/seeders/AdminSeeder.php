@@ -15,8 +15,17 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Crear rol admin
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        // 1. Crear roles
+        $roles = [
+            'admin',
+            'propietario',
+            'administrador',
+            'transportista',
+            'operador'
+        ];
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate(['name' => $roleName]);
+        }
 
         // 2. Crear permisos base (puedes ampliar luego)
         $permissions = [
@@ -32,8 +41,9 @@ class AdminSeeder extends Seeder
             Permission::firstOrCreate(['name' => $perm]);
         }
 
-        // 3. Dar todos los permisos al rol admin
-        $adminRole->givePermissionTo(Permission::all());
+        // 3. Dar TODOS los permisos al rol admin
+        $adminRole = Role::where('name', 'admin')->first();
+        $adminRole->syncPermissions(Permission::all());
 
         // 4. Crear usuario administrador
         $admin = User::firstOrCreate(
@@ -42,6 +52,7 @@ class AdminSeeder extends Seeder
                 'full_name' => 'Administrador del Sistema',
                 'name' => 'admin',
                 'password' => bcrypt('admin123'),
+                'estado' => 'ACTIVO',
                 'company' => 'Mi Empresa',
                 'phone_number' => '70000000',
             ]

@@ -99,29 +99,21 @@
                                     @endif
                                     <br>
                                     @hasrole('propietario|administrador')
-                                        @if ($ingreso->estado == 1)
+                                    @if ($ingreso->estado == 1)
 
-                                            <!-- Confirmar -->
-                                            <form action="{{ route('ingresos.cambiarEstado', $ingreso) }}" method="POST" style="display:inline;">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="accion" value="confirmar">
-                                                <button title="Confirmar" class="btn btn-success btn-sm">
-                                                    <i class="bi bi-check2-circle"></i>
-                                                </button>
-                                            </form>
+                                        <!-- Botón Abrir Modal Confirmar -->
+                                        <button class="btn btn-success btn-sm" title="Confirmar"
+                                                data-bs-toggle="modal" data-bs-target="#modalConfirmar{{ $ingreso->id }}">
+                                            <i class="bi bi-check2-circle"></i>
+                                        </button>
 
-                                            <!-- Anular -->
-                                            <form action="{{ route('ingresos.cambiarEstado', $ingreso) }}" method="POST" style="display:inline;">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="accion" value="anular">
-                                                <button title="Anular" class="btn btn-danger btn-sm">
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            </form>
+                                        <!-- Botón Abrir Modal Anular -->
+                                        <button class="btn btn-danger btn-sm" title="Anular"
+                                                data-bs-toggle="modal" data-bs-target="#modalAnular{{ $ingreso->id }}">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
 
-                                        @endif
+                                    @endif
                                     @endhasrole
 
                                 </td>
@@ -150,6 +142,74 @@
                                 </td>
 
                             </tr>
+                            <!-- Modal Confirmar -->
+                            <div class="modal fade" id="modalConfirmar{{ $ingreso->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title">Confirmar Ingreso</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body text-center">
+                                            <p class="fw-bold">
+                                                ¿Está seguro de CONFIRMAR el ingreso
+                                                <span class="text-primary">#{{ $ingreso->codigo_comprobante }}</span>?
+                                            </p>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                                            <form action="{{ route('ingresos.cambiarEstado', $ingreso) }}" method="POST">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="accion" value="confirmar">
+                                                <button class="btn btn-success">Confirmar</button>
+                                            </form>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modal Anular -->
+                            <div class="modal fade" id="modalAnular{{ $ingreso->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title">Anular Ingreso</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body text-center">
+                                            <p class="fw-bold">
+                                                ¿Está seguro de ANULAR el ingreso
+                                                <span class="text-danger">#{{ $ingreso->codigo_comprobante }}</span>?
+                                            </p>
+
+                                            <small class="text-muted d-block mt-2">
+                                                Esta acción no se puede deshacer.
+                                            </small>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                                            <form action="{{ route('ingresos.cambiarEstado', $ingreso) }}" method="POST">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="accion" value="anular">
+                                                <button class="btn btn-danger">Anular</button>
+                                            </form>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
 
                         @empty
                             <tr>

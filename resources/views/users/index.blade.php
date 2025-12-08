@@ -82,8 +82,8 @@
                                 <td>
                                     <span class="badge 
                                         @if($user->estado == 'ACTIVO') bg-success
-                                        @elseif($user->estado == 'NO ACTIVO') bg-warning
-                                        @elseif($user->estado == 'PENDIENTE') bg-orange
+                                        @elseif($user->estado == 'NO ACTIVO') bg-danger
+                                        @elseif($user->estado == 'PENDIENTE') bg-warning
                                         @else bg-danger @endif">
                                         {{ $user->estado ?? 'DESCONOCIDO' }}
                                     </span>
