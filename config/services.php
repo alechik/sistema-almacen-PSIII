@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | PlantaCruds API Integration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para la integración con el sistema PlantaCruds
+    | que maneja los envíos de planta hacia los almacenes.
+    |
+    */
+    'planta' => [
+        'url' => env('PLANTA_API_URL', 'http://127.0.0.1:8000'),
+        'timeout' => env('PLANTA_API_TIMEOUT', 30),
+    ],
+
 ];

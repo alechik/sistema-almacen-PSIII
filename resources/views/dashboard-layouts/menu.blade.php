@@ -229,6 +229,50 @@
               </ul>
             </li>
           @endif
+          {{-- INTEGRACIÓN CON PLANTA --}}
+          @if (auth()->user()->hasAnyRole(['administrador', 'propietario']))
+            <li class="nav-item {{ request()->routeIs('envios-planta.*') ? 'menu-open' : '' }}">
+              <a href="#" class="nav-link {{ request()->routeIs('envios-planta.*') ? 'active' : '' }}">
+                <i class="nav-icon bi bi-truck text-success"></i>
+                <p>
+                  ENVÍOS PLANTA
+                  <i class="nav-arrow bi bi-chevron-right"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="{{route('envios-planta.dashboard')}}" class="nav-link {{ request()->routeIs('envios-planta.dashboard') ? 'active' : '' }}">
+                    <i class="nav-icon bi bi-speedometer2"></i>
+                    <p>Dashboard</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{route('envios-planta.pedido.create')}}" class="nav-link {{ request()->routeIs('envios-planta.pedido.create') ? 'active' : '' }}">
+                    <i class="nav-icon bi bi-plus-circle text-success"></i>
+                    <p>Nuevo Pedido</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{route('envios-planta.mis-envios')}}" class="nav-link {{ request()->routeIs('envios-planta.mis-envios') ? 'active' : '' }}">
+                    <i class="nav-icon bi bi-person-badge"></i>
+                    <p>Mis Pedidos</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{route('envios-planta.index')}}" class="nav-link {{ request()->routeIs('envios-planta.index','envios-planta.show','envios-planta.monitoreo') ? 'active' : '' }}">
+                    <i class="nav-icon bi bi-list-ul"></i>
+                    <p>Todos los Envíos</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{route('envios-planta.incidentes')}}" class="nav-link {{ request()->routeIs('envios-planta.incidentes','envios-planta.incidente-show') ? 'active' : '' }}">
+                    <i class="nav-icon bi bi-exclamation-triangle text-danger"></i>
+                    <p>Incidentes</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+          @endif
         </ul>
         <!--end::Sidebar Menu-->
       </nav>

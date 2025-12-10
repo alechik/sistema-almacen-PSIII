@@ -197,3 +197,56 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ingresos/pdf', [ReporteController::class, 'ingresosPdf'])->name('reportes.ingresos.pdf');
     });
 });
+
+// ============================================
+// INTEGRACIÓN CON PLANTA - ENVÍOS
+// ============================================
+Route::middleware(['auth'])->prefix('envios-planta')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\EnvioPlantaController::class, 'dashboard'])
+        ->name('envios-planta.dashboard');
+    
+    // Listado de envíos
+    Route::get('/', [\App\Http\Controllers\EnvioPlantaController::class, 'index'])
+        ->name('envios-planta.index');
+    
+    // Sincronización manual
+    Route::post('/sincronizar', [\App\Http\Controllers\EnvioPlantaController::class, 'sincronizar'])
+        ->name('envios-planta.sincronizar');
+    
+    // ========== PEDIDOS A PLANTA (TESTING) ==========
+    // Mis envíos (del usuario actual)
+    Route::get('/mis-envios', [\App\Http\Controllers\PedidoPlantaController::class, 'misEnvios'])
+        ->name('envios-planta.mis-envios');
+    
+    // Crear nuevo pedido
+    Route::get('/pedido/crear', [\App\Http\Controllers\PedidoPlantaController::class, 'create'])
+        ->name('envios-planta.pedido.create');
+    Route::post('/pedido', [\App\Http\Controllers\PedidoPlantaController::class, 'store'])
+        ->name('envios-planta.pedido.store');
+    // ================================================
+    
+    // Incidentes
+    Route::get('/incidentes', [\App\Http\Controllers\EnvioPlantaController::class, 'incidentes'])
+        ->name('envios-planta.incidentes');
+    Route::get('/incidentes/{incidente}', [\App\Http\Controllers\EnvioPlantaController::class, 'incidenteShow'])
+        ->name('envios-planta.incidente-show');
+    
+    // Detalle de envío
+    Route::get('/{envioPlanta}', [\App\Http\Controllers\EnvioPlantaController::class, 'show'])
+        ->name('envios-planta.show');
+    
+    // Monitoreo en tiempo real
+    Route::get('/{envioPlanta}/monitoreo', [\App\Http\Controllers\EnvioPlantaController::class, 'monitoreo'])
+        ->name('envios-planta.monitoreo');
+    
+    // Ubicación actual (AJAX)
+    Route::get('/{envioPlanta}/ubicacion', [\App\Http\Controllers\EnvioPlantaController::class, 'ubicacionActual'])
+        ->name('envios-planta.ubicacion');
+    
+    // Documentos
+    Route::get('/{envioPlanta}/documento', [\App\Http\Controllers\EnvioPlantaController::class, 'documento'])
+        ->name('envios-planta.documento');
+    Route::get('/{envioPlanta}/nota-recepcion', [\App\Http\Controllers\EnvioPlantaController::class, 'notaRecepcion'])
+        ->name('envios-planta.nota-recepcion');
+});
