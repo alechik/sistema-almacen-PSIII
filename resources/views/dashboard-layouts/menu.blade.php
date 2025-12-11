@@ -188,12 +188,14 @@
                         <p>Roles</p>
                       </a>
                     </li>
-                    <li class="nav-item">
-                      <a href="{{route('almacen-users.index')}}" class="nav-link {{ request()->routeIs('almacen-users.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-shield-lock-fill"></i>
-                        <p>Almacen->Usuarios</p>
-                      </a>
-                    </li>
+                    @if (auth()->user()->hasAnyRole(['propietario']))
+                      <li class="nav-item">
+                        <a href="{{route('almacen-users.index')}}" class="nav-link {{ request()->routeIs('almacen-users.*') ? 'active' : '' }}">
+                          <i class="nav-icon bi bi-shield-lock-fill"></i>
+                          <p>Almacen->Usuarios</p>
+                        </a>
+                      </li>
+                    @endif
                   </ul>
                 </li>
               </ul>

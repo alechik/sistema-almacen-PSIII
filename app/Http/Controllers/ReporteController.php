@@ -32,14 +32,14 @@ class ReporteController extends Controller
         return view('reportes.salidas', compact('salidas'));
     }
 
-    // public function ingresos(Request $request)
-    // {
-    //     $ingresos = Ingreso::with(['almacen', 'operador', 'transportista'])
-    //         ->orderBy('fecha', 'desc')
-    //         ->get();
+    public function ingresos(Request $request)
+    {
+        $ingresos = Ingreso::with(['almacen', 'administrador', 'detalles'])
+            ->orderBy('fecha', 'desc')
+            ->get();
 
-    //     return view('reportes.ingresos', compact('ingresos'));
-    // }
+        return view('reportes.ingresos', compact('ingresos'));
+    }
 
     public function salidasPdf()
     {
@@ -103,10 +103,67 @@ class ReporteController extends Controller
     }
 
 
-    // public function ingresosPdf()
-    // {
-    //     $ingresos = Ingreso::with(['almacen', 'operador', 'transportista'])->get();
-    //     $pdf = Pdf::loadView('reportes.pdf.ingresos', compact('ingresos'));
-    //     return $pdf->download('Reporte_Ingresos.pdf');
-    // }
+    public function ingresosPdf()
+    {
+        $ingresos = Ingreso::with([
+            'almacen',
+            'administrador',
+            'detalles'
+        ])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        // Calcular totales
+        foreach ($ingresos as $i) {
+            $i->monto_total = $i->detalles->sum(fn($d) => $d->cant_ingreso * $d->precio);
+            $i->cantidad_total = $i->detalles->sum('cant_ingreso');
+        }
+
+        // Según roles
+        if (Auth::user()->hasRole('propietario')) {
+            $empresa = Auth::user();
+        } else {
+            $empresa = Auth::user()->parent;
+        }
+
+        // Lista fija de proveedores simulados
+        $proveedores = [
+            ['id' => 1, 'nombre' => 'Proveedor 1'],
+            ['id' => 2, 'nombre' => 'Proveedor 2'],
+            ['id' => 3, 'nombre' => 'Proveedor 3'],
+        ];
+
+        $pdf = Pdf::loadView('reportes.ingresos-general', [
+            'ingresos' => $ingresos,
+            'empresa' => $empresa,
+            'proveedores' => $proveedores
+        ])->setPaper('a4', 'landscape');
+
+        // Footer
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->get_canvas();
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+
+        $canvas->page_text(
+            25,
+            $h - 35,
+            "Generado por: " . ($empresa->full_name ?? '-') .
+                "     |     Fecha: " . now()->format('d/m/Y'),
+            null,
+            9,
+            [0, 0, 0]
+        );
+
+        $canvas->page_text(
+            $w - 120,
+            $h - 35,
+            "Página {PAGE_NUM} de {PAGE_COUNT}",
+            null,
+            9,
+            [0, 0, 0]
+        );
+
+        return $pdf->stream("Reporte_Ingresos.pdf");
+    }
 }

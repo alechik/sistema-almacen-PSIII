@@ -20,6 +20,10 @@ class IngresoController extends Controller
      * ESTADO = 1 : EMITIDO
      * ESTADO = 2 : COMPLETADO
      * ESTADO = 3 : ANULADO
+     * ESTADO = 4 : INCIDENTE
+     * ESTADO = 5 : ACEPTADO -> por parte del proveedor
+     * ESTADO = 6 : TERMINADO -> ruta completada
+     * 
      */
     //CONSUMIR APIS DE PROVEEDORES EXTERNOS
     private $proveedores = [
