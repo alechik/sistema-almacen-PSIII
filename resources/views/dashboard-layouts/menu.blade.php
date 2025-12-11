@@ -4,7 +4,7 @@
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
       <!--begin::Brand Link-->
-      <a href="./index.html" class="brand-link">
+      <a href="{{ route('dashboard') }}" class="brand-link">
         <!--begin::Brand Image-->
         <img
           src="{{asset('assets/img/AdminLTELogo.png')}}"
@@ -186,6 +186,12 @@
                       <a href="{{route('roles.index')}}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-shield-lock-fill"></i>
                         <p>Roles</p>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="{{route('almacen-users.index')}}" class="nav-link {{ request()->routeIs('almacen-users.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-shield-lock-fill"></i>
+                        <p>Almacen->Usuarios</p>
                       </a>
                     </li>
                   </ul>

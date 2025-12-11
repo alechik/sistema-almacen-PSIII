@@ -32,7 +32,7 @@ class Almacen extends Model
     // Relación muchos a muchos con users para almacen_user
     public function users()
     {
-        return $this->belongsToMany(User::class, 'almacen_user')
+        return $this->belongsToMany(User::class, 'almacen_users')
             ->withTimestamps();
     }
 

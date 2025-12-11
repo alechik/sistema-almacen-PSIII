@@ -14,8 +14,15 @@ class RoleController extends Controller
     public function index()
     {
         // Obtenemos todos los roles con paginación
+        if (auth()->user()->hasRole('propietario')) {
+            $roles = ModelsRole::whereNotIn('name', ['admin'])->paginate(10);
+            return view('roles.index', compact('roles'));
+        } else {
+            $roles = ModelsRole::whereNotIn('name', ['propietario', 'admin'])
+                ->paginate(10);
+            return view('roles.index', compact('roles'));
+        }
         $roles = ModelsRole::paginate(10);
-
         return view('roles.index', compact('roles'));
     }
 

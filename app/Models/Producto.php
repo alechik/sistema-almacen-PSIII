@@ -23,6 +23,7 @@ class Producto extends Model
         'precio',
         'proveedor_id',
         'unidad_medida_id',
+        'en_pedido'
     ];
 
     /*

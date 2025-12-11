@@ -27,7 +27,7 @@
         <div class="container-fluid">
 
             @if ($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show">
                     <strong>Hay errores:</strong>
                     <ul class="mb-0">
                         @foreach ($errors->all() as $e)
@@ -39,7 +39,6 @@
             @endif
 
             <div class="card">
-
                 <div class="card-header">
                     <h3 class="card-title">Registrar Producto</h3>
                 </div>
@@ -51,12 +50,12 @@
 
                         <div class="row">
 
-                            <!-- Código -->
+                            <!-- Código generado automáticamente -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Código *</label>
-                                <input type="text" name="cod_producto"
+                                <input type="text" name="cod_producto" id="cod_producto"
                                        class="form-control @error('cod_producto') is-invalid @enderror"
-                                       value="{{ old('cod_producto') }}">
+                                       value="{{ old('cod_producto') }}" readonly>
                                 @error('cod_producto')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -76,7 +75,7 @@
                             <!-- Categoría -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Categoría *</label>
-                                <select name="categoria_id"
+                                <select name="categoria_id" id="categoria_id"
                                         class="form-select @error('categoria_id') is-invalid @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach ($categorias as $cat)
@@ -109,7 +108,7 @@
                                 @enderror
                             </div>
 
-                            <!-- Unidad de Medida -->
+                            <!-- Unidad de medida -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Unidad de Medida *</label>
                                 <select name="unidad_medida_id"
@@ -131,7 +130,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Stock</label>
                                 <input type="number" step="0.01" name="stock"
-                                       class="form-control @error('stock') is-invalid @enderror"
+                                       class="form-control"
                                        value="{{ old('stock') }}">
                             </div>
 
@@ -139,7 +138,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Stock mínimo</label>
                                 <input type="number" step="0.01" name="stock_minimo"
-                                       class="form-control @error('stock_minimo') is-invalid @enderror"
+                                       class="form-control"
                                        value="{{ old('stock_minimo') }}">
                             </div>
 
@@ -147,7 +146,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Precio</label>
                                 <input type="number" step="0.01" name="precio"
-                                       class="form-control @error('precio') is-invalid @enderror"
+                                       class="form-control"
                                        value="{{ old('precio') }}">
                             </div>
 
@@ -155,7 +154,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Fecha de vencimiento</label>
                                 <input type="date" name="fech_vencimiento"
-                                       class="form-control @error('fech_vencimiento') is-invalid @enderror"
+                                       class="form-control"
                                        value="{{ old('fech_vencimiento') }}">
                             </div>
 
@@ -180,7 +179,6 @@
                     </form>
 
                 </div>
-
             </div>
 
         </div>
@@ -189,3 +187,21 @@
 </main>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('categoria_id').addEventListener('change', function () {
+        let categoriaID = this.value;
+
+        if (categoriaID) {
+            fetch(`/productos/generar-codigo/${categoriaID}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cod_producto').value = data.codigo;
+                });
+        } else {
+            document.getElementById('cod_producto').value = "";
+        }
+    });
+</script>
+@endpush

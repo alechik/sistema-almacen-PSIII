@@ -23,22 +23,52 @@ class PedidoController extends Controller
      */
     public function index()
     {
-        $usuario = Auth::user();
+        $user = Auth::user();
 
-        // Si es propietario → ve pedidos de todos sus administradores
-        if ($usuario->hasRole('propietario')) {
-            $pedidos = Pedido::with(['almacen', 'administrador'])
-                ->whereHas('administrador', function ($q) use ($usuario) {
-                    $q->where('user_id', $usuario->id);
-                })
+        // PROPIETARIO → ve los pedidos de todos sus administradores
+        if ($user->hasRole('propietario')) {
+
+            // IDs de todos sus administradores
+            $admins = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+
+            $pedidos = Pedido::whereIn('administrador_id', $admins)
+                ->with(['almacen', 'administrador'])
                 ->orderBy('id', 'desc')
                 ->paginate(10);
-        } else {
-            // Si es administrador → solo ve sus pedidos
-            $pedidos = Pedido::with(['almacen', 'administrador'])
-                ->where('administrador_id', $usuario->id)
+        }
+
+        // ADMINISTRADOR → SOLO sus pedidos
+        else if ($user->hasRole('administrador')) {
+
+            $pedidos = Pedido::where('administrador_id', $user->id)
+                ->with(['almacen', 'administrador'])
                 ->orderBy('id', 'desc')
                 ->paginate(10);
+        }
+
+        // OPERADOR → pedidos donde participa
+        else if ($user->hasRole('operador')) {
+
+            $pedidos = Pedido::where('operador_id', $user->id)
+                ->with(['almacen', 'administrador'])
+                ->orderBy('id', 'desc')
+                ->paginate(10);
+        }
+
+        // TRANSPORTISTA → pedidos donde participa
+        else if ($user->hasRole('transportista')) {
+
+            $pedidos = Pedido::where('transportista_id', $user->id)
+                ->with(['almacen', 'administrador'])
+                ->orderBy('id', 'desc')
+                ->paginate(10);
+        }
+
+        // OTROS (por si existiera un rol raro)
+        else {
+            $pedidos = collect(); // vacío
         }
 
         return view('pedidos.index', [
@@ -50,32 +80,30 @@ class PedidoController extends Controller
     public function create()
     {
         $admin = Auth::user();
-        $propietarioId = $admin->user_id;
-        $lastId = Pedido::max('id') ?? 0;
-        $almacenes = Almacen::where('user_id', $propietarioId)->get();
-        $operadores = User::role('operador')->where('user_id', $propietarioId)->get();
-        $transportistas = User::role('transportista')->where('user_id', $propietarioId)->get();
-        $productos = Producto::where('estado', 1)->get(); // <<< Agregado
+        $propietarioId = $admin->user_id ?? $admin->id;
 
-        return view('pedidos.create', compact('almacenes', 'operadores', 'lastId', 'transportistas', 'productos') + [
-            'proveedores' => $this->proveedores
-        ]);
+        $lastId = Pedido::max('id') ?? 0;
+
+        // Almacenes asignados al administrador
+        $almacenes = $admin->almacenes;
+
+        // Proveedores
+        $proveedores = $this->proveedores;
+
+        return view('pedidos.create', compact('almacenes', 'proveedores', 'lastId'));
     }
 
     public function store(Request $request)
     {
-        // dd($request->all());
         $validated = $request->validate([
             'codigo_comprobante' => 'required|string',
             'fecha' => 'required|date',
             'fecha_min' => 'required|date',
             'fecha_max' => 'required|date|after_or_equal:fecha_min',
-
             'almacen_id' => 'required|exists:almacens,id',
             'proveedor_id' => 'required',
             'operador_id' => 'required|exists:users,id',
             'transportista_id' => 'required|exists:users,id',
-
             'productos' => 'required|array|min:1',
             'productos.*.producto_id' => 'required|exists:productos,id',
             'productos.*.cantidad' => 'required|numeric|min:1',
@@ -87,7 +115,7 @@ class PedidoController extends Controller
         $lastPedido = Pedido::orderBy('id', 'desc')->first();
         $newId = $lastPedido ? $lastPedido->id + 1 : 1;
 
-        $codigo = ($propietarioId * 1000000) + $newId;
+        $codigo = 'P' . ($propietarioId * 1000000 + $newId);
 
         $pedido = Pedido::create([
             'codigo_comprobante' => $codigo,
@@ -137,25 +165,36 @@ class PedidoController extends Controller
         $pedido->load(['detalles.producto']);
 
         $admin = Auth::user();
-        if ($admin->hasRole('propietario')) {
-            $propietarioId = $admin->id;
-        } else {
-            $propietarioId = $admin->user_id;
-        }
 
+        $propietarioId = $admin->hasRole('propietario')
+            ? $admin->id
+            : $admin->user_id;
+
+        // Almacenes del propietario
         $almacenes = Almacen::where('user_id', $propietarioId)->get();
-        $operadores = User::role('operador')->where('user_id', $propietarioId)->get();
-        $transportistas = User::role('transportista')->where('user_id', $propietarioId)->get();
-        $productos = Producto::where('estado', 1)->get();
 
-        return view('pedidos.edit', [
-            'pedido' => $pedido,
-            'almacenes' => $almacenes,
-            'operadores' => $operadores,
-            'transportistas' => $transportistas,
-            'productos' => $productos,
-            'proveedores' => $this->proveedores
-        ]);
+        // Operadores del propietario
+        $operadores = User::role('operador')
+            ->where('user_id', $propietarioId)
+            ->get();
+
+        // Transportistas del propietario
+        $transportistas = User::role('transportista')
+            ->where('user_id', $propietarioId)
+            ->get();
+
+        // Productos filtrados por proveedor actual del pedido
+        $productos = Producto::where('proveedor_id', $pedido->proveedor_id)
+            ->where('estado', 1)
+            ->get();
+
+        return view('pedidos.edit', compact(
+            'pedido',
+            'almacenes',
+            'operadores',
+            'transportistas',
+            'productos'
+        ) + ['proveedores' => $this->proveedores]);
     }
 
     public function update(Request $request, Pedido $pedido)
@@ -175,7 +214,7 @@ class PedidoController extends Controller
             'productos.*.cantidad' => 'required|numeric|min:1',
         ]);
 
-        // Actualización cabecera
+        // CABECERA
         $pedido->update([
             'fecha' => $request->fecha,
             'fecha_min' => $request->fecha_min,
@@ -186,7 +225,7 @@ class PedidoController extends Controller
             'transportista_id' => $request->transportista_id,
         ]);
 
-        // Reemplazar el detalle
+        // DETALLE (Reemplazo total)
         DetallePedido::where('pedido_id', $pedido->id)->delete();
 
         foreach ($request->productos as $item) {
@@ -197,14 +236,10 @@ class PedidoController extends Controller
             ]);
         }
 
-        return redirect()->route('pedidos.index', $pedido->id)
+        return redirect()->route('pedidos.index')
             ->with('success', 'Pedido actualizado correctamente.');
     }
 
-    public function destroy(Pedido $pedido)
-    {
-        //
-    }
     public function confirmar(Pedido $pedido)
     {
         if ($pedido->estado != Pedido::EMITIDO) {
@@ -230,6 +265,37 @@ class PedidoController extends Controller
 
         return back()->with('success', 'Pedido anulado correctamente.');
     }
+
+    // Obtener operadores y transportistas del almacén
+    public function getUsuariosPorAlmacen($almacenId)
+    {
+        $operadores = User::role('operador')
+            ->whereHas('almacenes', fn($q) => $q->where('almacen_id', $almacenId))
+            ->select('id', 'full_name')
+            ->get();
+
+        $transportistas = User::role('transportista')
+            ->whereHas('almacenes', fn($q) => $q->where('almacen_id', $almacenId))
+            ->select('id', 'full_name')
+            ->get();
+
+        return response()->json([
+            'operadores' => $operadores,
+            'transportistas' => $transportistas
+        ]);
+    }
+
+    // Obtener productos según proveedor
+    public function getProductosPorProveedor($proveedorId)
+    {
+        $productos = Producto::where('proveedor_id', $proveedorId)
+            ->where('estado', 1)
+            ->select('id', 'nombre')
+            ->get();
+
+        return response()->json($productos);
+    }
+
 
 
     public function generarPDF(Pedido $pedido)

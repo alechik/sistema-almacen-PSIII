@@ -44,10 +44,6 @@
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Pedidos</h3>
-
-                    {{-- <a href="{{ route('pedidos.create') }}" class="btn btn-primary btn-sm ms-auto">
-                        <i class="fas fa-plus"></i> Nuevo Pedido
-                    </a> --}}
                 </div>
 
                 <div class="card-body p-0">
@@ -83,6 +79,7 @@
                                 <td>{{ $pedido->administrador->full_name ?? '—' }}</td>
 
                                 <td>{{ \Carbon\Carbon::parse($pedido->fecha)->format('d/m/Y') }}</td>
+
                                 <td>
                                     @if ($pedido->estado == 0)
                                         <span class="badge bg-danger">CANCELADO</span>
@@ -102,23 +99,29 @@
                                     <a title="Ver Pedido" href="{{ route('pedidos.show', $pedido) }}" class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
+
                                     @hasrole('propietario')
-                                            <button title="Confirmar pedido" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarModal">
+                                        @if ($pedido->estado==1)
+                                            <button 
+                                                title="Confirmar pedido"
+                                                class="btn btn-success btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmarModal"
+                                                data-id="{{ $pedido->id }}"
+                                                data-codigo="{{ $pedido->codigo_comprobante }}"
+                                                data-fecha="{{ $pedido->fecha }}"
+                                                data-almacen="{{ $pedido->almacen->nombre }}"
+                                                data-proveedor="{{ $prov['nombre'] ?? 'No definido' }}"
+                                                data-detalles='@json($pedido->detalles)'>
                                                 <i class="bi bi-bag-check"></i>
                                             </button>
-                                        <a title="Editar Pedido" href="{{ route('pedidos.edit', $pedido) }}" class="btn btn-warning btn-sm">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
+                                            <a title="Editar Pedido" href="{{ route('pedidos.edit', $pedido) }}" class="btn btn-warning btn-sm">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                        @endif
+
                                     @endhasrole
 
-                                    {{-- <button type="button"
-                                        class="btn btn-danger btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalEliminar"
-                                        data-id="{{ $pedido->id }}"
-                                        data-nombre="Pedido #{{ $pedido->codigo_comprobante }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button> --}}
                                 </td>
 
                             </tr>
@@ -147,111 +150,98 @@
 
 </main>
 
-<!-- Modal Eliminar -->
-<div class="modal fade" id="modalEliminar" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Confirmar eliminación</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <p>¿Desea eliminar el siguiente pedido?</p>
-                <h5 class="fw-bold text-danger" id="nombrePedido"></h5>
-                <p>Esta acción no se puede deshacer.</p>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-
-                <form id="formEliminar" method="POST">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
-
-        </div>
-    </div>
-</div>
-<!-- MODAL CONFIRMAR -->
+<!-- ========================= -->
+<!--  MODAL CONFIRMAR PEDIDO   -->
+<!-- ========================= -->
 <div class="modal fade" id="confirmarModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
+
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title">Confirmar Pedido</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
-                <p class="mb-3">Confirma el siguiente pedido:</p>
+
                 <ul class="list-group mb-3">
                     <li class="list-group-item">
                         <div class="row">
-                            <div class="col-6"><strong>Código:</strong> {{ $pedido->codigo_comprobante }}</div>
-                            <div class="col-6"><strong>Fecha:</strong> {{ $pedido->fecha }}</div>
+                            <div class="col-6"><strong>Código:</strong> <span id="codigoPedido"></span></div>
+                            <div class="col-6"><strong>Fecha:</strong> <span id="fechaPedido"></span></div>
                         </div>
                     </li>
 
                     <li class="list-group-item">
                         <div class="row">
-                            <div class="col-6"><strong>Almacén:</strong> {{ $pedido->almacen->nombre }}</div>
-                            <div class="col-6"><strong>Proveedor:</strong>
-                                {{
-                                    collect($proveedores)
-                                        ->firstWhere('id', $pedido->proveedor_id)['nombre']
-                                        ?? 'No definido'
-                                }}
-                            </div>
+                            <div class="col-6"><strong>Almacén:</strong> <span id="almacenPedido"></span></div>
+                            <div class="col-6"><strong>Proveedor:</strong> <span id="proveedorPedido"></span></div>
                         </div>
                     </li>
                 </ul>
+
                 <h6 class="text-uppercase fw-bold">Detalle del Pedido</h6>
+
                 <table class="table table-sm table-bordered">
                     <thead class="table-light">
                         <tr>
                             <th>Producto</th>
-                            <th class="text-center" style="width: 25%">Cantidad</th>
+                            <th class="text-center" style="width:25%">Cantidad</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach($pedido->detalles as $detalle)
-                            <tr>
-                                <td>{{ $detalle->producto->nombre }}</td>
-                                <td class="text-center">{{ $detalle->cantidad }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+                    <tbody id="tablaDetalles"></tbody>
                 </table>
 
                 <p class="text-muted small mt-2">Esta acción no se puede revertir.</p>
+
             </div>
 
             <div class="modal-footer">
-                <form method="POST" action="{{ route('pedidos.confirmar', $pedido->id) }}">
+                <form id="formConfirmar" method="POST">
                     @csrf
                     @method('PUT')
                     <button type="submit" class="btn btn-success">Sí, Confirmar</button>
                 </form>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             </div>
+
         </div>
     </div>
 </div>
+
 @endsection
 
 @push('scripts')
 <script>
-    const modalEliminar = document.getElementById('modalEliminar');
+    const modalConfirmar = document.getElementById('confirmarModal');
 
-    modalEliminar.addEventListener('show.bs.modal', function (event) {
+    modalConfirmar.addEventListener('show.bs.modal', function (event) {
+
         const button = event.relatedTarget;
-        document.getElementById('nombrePedido').textContent =
-            button.getAttribute('data-nombre');
 
-        document.getElementById('formEliminar').action =
-            `/pedidos/${button.getAttribute('data-id')}`;
+        document.getElementById('codigoPedido').textContent = button.getAttribute('data-codigo');
+        document.getElementById('fechaPedido').textContent = button.getAttribute('data-fecha');
+        document.getElementById('almacenPedido').textContent = button.getAttribute('data-almacen');
+        document.getElementById('proveedorPedido').textContent = button.getAttribute('data-proveedor');
+
+        // Cambiar acción del formulario
+        let url = "/pedidos/confirmar/" + button.getAttribute('data-id');
+        document.getElementById('formConfirmar').action = url;
+
+        // Cargar detalles
+        let detalles = JSON.parse(button.getAttribute('data-detalles'));
+        let tbody = document.getElementById('tablaDetalles');
+        tbody.innerHTML = ""; 
+
+        detalles.forEach(det => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${det.producto.nombre}</td>
+                    <td class="text-center">${det.cantidad}</td>
+                </tr>
+            `;
+        });
+
     });
 </script>
 @endpush

@@ -16,7 +16,7 @@
     <!--begin::End Navbar Links-->
     <ul class="navbar-nav ms-auto">
     <!--begin::Navbar Search-->
-    <li class="nav-item">
+    <li class="nav-item" hidden>
         <a class="nav-link" data-widget="navbar-search" href="#" role="button">
         <i class="bi bi-search"></i>
         </a>
@@ -112,32 +112,93 @@
     </li>
     <!--end::Messages Dropdown Menu-->
     <!--begin::Notifications Dropdown Menu-->
+    @if (auth()->user()->hasAnyRole(['admin']))
+        <li class="nav-item dropdown">
+
+            <a class="nav-link" data-bs-toggle="dropdown" href="#">
+                <i class="bi bi-bell-fill"></i>
+
+                @if(isset($cantidadPendientes) && $cantidadPendientes > 0)
+                    <span class="navbar-badge badge text-bg-danger">
+                        {{ $cantidadPendientes }}
+                    </span>
+                @endif
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+
+                @if(isset($cantidadPendientes) && $cantidadPendientes > 0)
+
+                    <span class="dropdown-item dropdown-header">
+                        {{ $cantidadPendientes }} Usuarios Pendientes
+                    </span>
+
+                    <div class="dropdown-divider"></div>
+
+                    @foreach ($pendientesUsuarios as $u)
+                        <a href="{{ route('users.edit', $u->id) }}" class="dropdown-item">
+
+                            <i class="bi bi-person-plus-fill me-2"></i>
+                            <strong>{{ $u->full_name }}</strong>
+                            <br>
+
+                            <span class="text-muted fs-7">{{ $u->email }}</span>
+
+                            <span class="float-end text-secondary fs-7">
+                                {{ $u->created_at->diffForHumans() }}
+                            </span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                    @endforeach
+
+                    <a href="{{ route('users.index') }}" class="dropdown-item dropdown-footer">
+                        Ver todos los usuarios
+                    </a>
+
+                @else
+
+                    <span class="dropdown-item text-center text-muted p-3">
+                        No hay usuarios pendientes
+                    </span>
+
+                @endif
+
+            </div>
+
+        </li>
+    @endif
+    @role('propietario')
     <li class="nav-item dropdown">
         <a class="nav-link" data-bs-toggle="dropdown" href="#">
-        <i class="bi bi-bell-fill"></i>
-        <span class="navbar-badge badge text-bg-warning">15</span>
+            <i class="bi bi-bell-fill"></i>
+            @if($cantidadPedidosPendientes > 0)
+                <span class="badge bg-warning navbar-badge">
+                    {{ $cantidadPedidosPendientes }}
+                </span>
+            @endif
         </a>
+
         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-        <span class="dropdown-item dropdown-header">15 Notifications</span>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item">
-            <i class="bi bi-envelope me-2"></i> 4 new messages
-            <span class="float-end text-secondary fs-7">3 mins</span>
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item">
-            <i class="bi bi-people-fill me-2"></i> 8 friend requests
-            <span class="float-end text-secondary fs-7">12 hours</span>
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item">
-            <i class="bi bi-file-earmark-fill me-2"></i> 3 new reports
-            <span class="float-end text-secondary fs-7">2 days</span>
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item dropdown-footer"> See All Notifications </a>
+            <span class="dropdown-header">
+                {{ $cantidadPedidosPendientes }} pedidos pendientes
+            </span>
+
+            @foreach($pedidosPendientes as $pedido)
+                <a href="{{ route('pedidos.show', $pedido->id) }}" class="dropdown-item">
+                    <i class="fas fa-box me-2"></i> Pedido #{{ $pedido->id }}
+                    <span class="float-end text-muted text-sm">{{ $pedido->created_at->diffForHumans() }}</span>
+                </a>
+            @endforeach
+
+            <div class="dropdown-divider"></div>
+            <a href="{{ route('pedidos.index') }}" class="dropdown-item dropdown-footer">
+                Ver todos los pedidos
+            </a>
         </div>
     </li>
+    @endrole
+
+
     <!--end::Notifications Dropdown Menu-->
     <!--begin::Fullscreen Toggle-->
     <li class="nav-item">

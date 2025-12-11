@@ -56,8 +56,14 @@ class ReporteController extends Controller
             $s->total = $s->detalles->sum(fn($d) => $d->cant_salida * $d->precio);
             $s->cantidad_total = $s->detalles->sum('cant_salida');
         }
+        if (Auth::user()->hasRole('propietario')) {
+            $empresa = Auth::user();
+        } else {
+            $empresa = Auth::user()->parent;
+        }
+        // dd($empresa);
 
-        $empresa = User::find(Auth::user()->user_id);
+        // $empresa = User::find(Auth::user()->user_id);
         $puntos_ventas = $this->puntos_ventas;
 
         $pdf = Pdf::loadView('reportes.salidas-general', [

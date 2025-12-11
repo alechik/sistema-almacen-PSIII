@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\AlmacenController;
+use App\Http\Controllers\AlmacenUserController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IngresoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\ProductoStockMinimoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RoleController;
@@ -20,9 +23,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return view('dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -91,6 +98,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
+
+    Route::get('/productos/generar-codigo/{categoria}', [ProductoController::class, 'generarCodigo']);
+    Route::get('/productos/stock/minimo', [ProductoStockMinimoController::class, 'index'])
+        ->name('productos.stock.minimo');
 });
 
 Route::middleware('auth')->group(function () {
@@ -122,9 +133,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::get('/users/{user}/edittwo', [UserController::class, 'edittwo'])->name('users.edittwo');
-    Route::put('/users/{user}', [UserController::class, 'updatetwo'])->name('users.updatetwo');
+    Route::put('/users/{user}/updatetwo', [UserController::class, 'updatetwo'])->name('users.updatetwo');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/almacen-users', [AlmacenUserController::class, 'index'])->name('almacen-users.index');
+    Route::get('/almacen-users/create', [AlmacenUserController::class, 'create'])->name('almacen-users.create');
+    Route::post('/almacen-users', [AlmacenUserController::class, 'store'])->name('almacen-users.store');
+    Route::get('/almacen-users/{almacenUser}', [AlmacenUserController::class, 'show'])->name('almacen-users.show');
+    Route::get('/almacen-users/{almacenUser}/edit', [AlmacenUserController::class, 'edit'])->name('almacen-users.edit');
+    Route::put('/almacen-users/{almacenUser}', [AlmacenUserController::class, 'update'])->name('almacen-users.update');
+    Route::delete('/almacen-users/{almacenUser}', [AlmacenUserController::class, 'destroy'])->name('almacen-users.destroy');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -141,6 +164,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('pedidos.confirmar');
     Route::put('/pedidos/{pedido}/anular', [PedidoController::class, 'anular'])
         ->name('pedidos.anular');
+
+    Route::get('/ajax/almacen/{almacen}/usuarios', [PedidoController::class, 'getUsuariosPorAlmacen']);
+    Route::get('/ajax/proveedor/{proveedor}/productos', [PedidoController::class, 'getProductosPorProveedor']);
 
     // REPORTE EN PDF
     Route::get('/pedidos/{pedido}/pdf', [PedidoController::class, 'generarPDF'])

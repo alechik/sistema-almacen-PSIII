@@ -68,7 +68,7 @@
                                 <label class="form-label">Código *</label>
                                 <input type="text" name="cod_producto"
                                        class="form-control @error('cod_producto') is-invalid @enderror"
-                                       value="{{ old('cod_producto', $producto->cod_producto) }}">
+                                       value="{{ old('cod_producto', $producto->cod_producto) }}" readonly>
                                 @error('cod_producto')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror

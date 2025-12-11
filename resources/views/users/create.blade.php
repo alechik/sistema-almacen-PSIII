@@ -98,7 +98,7 @@
                                 <label class="form-label fw-bold">Empresa</label>
                                 <input type="text" name="company"
                                     class="form-control @error('company') is-invalid @enderror"
-                                    value="{{ old('company') }}" placeholder="Ej: Transportes Bolivia SRL">
+                                    value="{{ old('company', auth()->user()->company) }}" readonly>
                                 @error('company')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror

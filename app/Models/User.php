@@ -70,7 +70,7 @@ class User extends Authenticatable
      */
     public function almacenes()
     {
-        return $this->belongsToMany(Almacen::class, 'almacen_user')
+        return $this->belongsToMany(Almacen::class, 'almacen_users')
             ->withTimestamps();
     }
 
@@ -100,5 +100,13 @@ class User extends Authenticatable
     public function scopePropietarios($query)
     {
         return $query->role('propietario'); // Spatie permite filtrar así
+    }
+
+    public function scopePendientes($query)
+    {
+        return $query->where('estado', 'PENDIENTE')
+            ->whereHas('roles', function ($q) {
+                $q->where('name', 'propietario');
+            });
     }
 }

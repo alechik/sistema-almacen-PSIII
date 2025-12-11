@@ -81,20 +81,51 @@
 
 <hr class="my-4">
 
-<!-- Rol -->
-<div class="mb-4">
-    <label class="form-label fw-bold">Rol del Usuario *</label>
-    <select name="role" class="form-select @error('role') is-invalid @enderror">
-        <option value="">Seleccione un rol...</option>
-
-        @foreach($roles as $role)
-            <option value="{{ $role }}"
-                {{ old('role', isset($user) && $user->roles->first() ? $user->roles->first()->name : '') == $role ? 'selected' : '' }}>
-                {{ ucfirst($role) }}
+<div class="row">
+    <!-- Rol -->
+    <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Rol del Usuario *</label>
+        <select name="role" class="form-select @error('role') is-invalid @enderror">
+            <option value="">Seleccione un rol...</option>
+    
+            @foreach($roles as $role)
+                <option value="{{ $role }}"
+                    {{ old('role', isset($user) && $user->roles->first() ? $user->roles->first()->name : '') == $role ? 'selected' : '' }}>
+                    {{ ucfirst($role) }}
+                </option>
+            @endforeach
+        </select>
+        @error('role')
+            <small class="text-danger">{{ $message }}</small>
+        @enderror
+    </div>
+    <!-- Estado -->
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Estado *</label>
+        <select name="estado" 
+                class="form-select @error('estado') is-invalid @enderror" 
+                required>
+    
+            <option value="">-- Seleccione un estado --</option>
+    
+            <option value="ACTIVO" 
+                {{ old('estado', $user->estado) == 'ACTIVO' ? 'selected' : '' }}>
+                ACTIVO
             </option>
-        @endforeach
-    </select>
-    @error('role')
-        <small class="text-danger">{{ $message }}</small>
-    @enderror
+    
+            <option value="PENDIENTE" 
+                {{ old('estado', $user->estado) == 'PENDIENTE' ? 'selected' : '' }}>
+                PENDIENTE
+            </option>
+    
+            <option value="NO ACTIVO" 
+                {{ old('estado', $user->estado) == 'NO ACTIVO' ? 'selected' : '' }}>
+                NO ACTIVO
+            </option>
+        </select>
+    
+        @error('estado')
+            <span class="invalid-feedback">{{ $message }}</span>
+        @enderror
+    </div>
 </div>

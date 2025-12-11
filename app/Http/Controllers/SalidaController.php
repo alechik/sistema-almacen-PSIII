@@ -305,6 +305,7 @@ class SalidaController extends Controller
 
     public function cambiarEstado(Request $request, Salida $salida)
     {
+        // dd($salida);
         $accion = $request->accion;
 
         if (!Auth::user()->hasRole('administrador|propietario')) {

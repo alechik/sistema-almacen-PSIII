@@ -176,4 +176,22 @@ class ProductoController extends Controller
                 ->with('success', 'Producto activado correctamente.');
         }
     }
+    public function generarCodigo($categoria_id)
+    {
+        $categoria = Categoria::findOrFail($categoria_id);
+
+        // Inicial de categoría
+        $inicial = strtoupper(substr($categoria->nombre, 0, 1));
+
+        // Cantidad de productos en esa categoría → correlativo
+        $contador = Producto::where('categoria_id', $categoria_id)->count() + 1;
+
+        // Formato 0001
+        // $correlativo = str_pad($contador, 4, '0', STR_PAD_LEFT);
+
+        // Código final
+        $codigo = $inicial . (($categoria_id * 1000) + $contador);
+
+        return response()->json(['codigo' => $codigo]);
+    }
 }

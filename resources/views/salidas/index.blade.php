@@ -133,6 +133,64 @@
                                     </td>
 
                                 </tr>
+                                <!-- Modal Confirmar -->
+                                <div class="modal fade" id="modalConfirmar" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+
+                                    <div class="modal-header bg-success text-white">
+                                        <h5 class="modal-title">Confirmar Salida</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        ¿Está seguro de confirmar esta salida? <br>
+                                        <strong>Esta acción no se podrá revertir.</strong>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                                        <form id="formConfirmar" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="accion" value="confirmar">
+                                            <button class="btn btn-success">Confirmar</button>
+                                        </form>
+                                    </div>
+
+                                    </div>
+                                </div>
+                                </div>
+                                <!-- Modal Anular -->
+                                <div class="modal fade" id="modalAnular" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title">Anular Salida</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        ¿Desea anular esta salida?<br>
+                                        <strong>Una vez anulada, no se podrá revertir.</strong>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                                        <form id="formAnular" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="accion" value="anular">
+                                            <button class="btn btn-danger">Anular</button>
+                                        </form>
+                                    </div>
+
+                                    </div>
+                                </div>
+                                </div>
 
                             @empty
                                 <tr>
@@ -154,64 +212,7 @@
         </div>
     </div>
 
-<!-- Modal Confirmar -->
-<div class="modal fade" id="modalConfirmar" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
 
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Confirmar Salida</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        ¿Está seguro de confirmar esta salida? <br>
-        <strong>Esta acción no se podrá revertir.</strong>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-
-        <form id="formConfirmar" method="POST" class="d-inline">
-            @csrf
-            @method('PUT')
-            <input type="hidden" name="accion" value="confirmar">
-            <button class="btn btn-success">Confirmar</button>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</div>
-<!-- Modal Anular -->
-<div class="modal fade" id="modalAnular" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">Anular Salida</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        ¿Desea anular esta salida?<br>
-        <strong>Una vez anulada, no se podrá revertir.</strong>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-
-        <form id="formAnular" method="POST" class="d-inline">
-            @csrf
-            @method('PUT')
-            <input type="hidden" name="accion" value="anular">
-            <button class="btn btn-danger">Anular</button>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</div>
 
 </main>
 @push('scripts')
@@ -224,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var boton = event.relatedTarget;
         var id = boton.getAttribute('data-id');
         document.getElementById('formConfirmar').action =
-            "/salidas/" + id + "/cambiar-estado";
+            "/salidas/" + id + "/estado";
     });
 
     // Modal Anular
@@ -233,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var boton = event.relatedTarget;
         var id = boton.getAttribute('data-id');
         document.getElementById('formAnular').action =
-            "/salidas/" + id + "/cambiar-estado";
+            "/salidas/" + id + "/estado";
     });
 
 });

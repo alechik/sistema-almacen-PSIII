@@ -44,7 +44,6 @@ class UserController extends Controller
         } else {
             abort(403, 'No tienes permisos para crear usuarios.');
         }
-
         return view('users.create', compact('roles'));
     }
 
@@ -166,6 +165,7 @@ class UserController extends Controller
             'company' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:20',
             'password' => 'nullable|min:6',
+            'estado' => 'required|in:ACTIVO,PENDIENTE,NO ACTIVO',
             'role' => 'required|in:' . implode(',', $availableRoles),
         ]);
 
@@ -176,7 +176,7 @@ class UserController extends Controller
             'email' => $request->email,
             'company' => $request->company,
             'phone_number' => $request->phone_number,
-            'estado' => $user->estado,
+            'estado' => $request->estado,
         ]);
 
         // Si cambia contraseña
