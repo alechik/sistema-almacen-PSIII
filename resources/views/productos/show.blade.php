@@ -91,16 +91,16 @@
                         </div>
 
                         <!-- Stock -->
-                        <div class="col-md-4 mb-3">
+                        {{-- <div class="col-md-4 mb-3">
                             <label class="fw-bold">Stock:</label>
                             <p>{{ $producto->stock ?? 0 }}</p>
-                        </div>
+                        </div> --}}
 
                         <!-- Stock mínimo -->
-                        <div class="col-md-4 mb-3">
+                        {{-- <div class="col-md-4 mb-3">
                             <label class="fw-bold">Stock Mínimo:</label>
                             <p>{{ $producto->stock_minimo ?? 0 }}</p>
-                        </div>
+                        </div> --}}
 
                         <!-- Fecha de vencimiento -->
                         <div class="col-md-4 mb-3">

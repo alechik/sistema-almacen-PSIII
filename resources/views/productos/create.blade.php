@@ -127,20 +127,20 @@
                             </div>
 
                             <!-- Stock -->
-                            <div class="col-md-4 mb-3">
+                            {{-- <div class="col-md-4 mb-3">
                                 <label class="form-label">Stock</label>
                                 <input type="number" step="0.01" name="stock"
                                        class="form-control"
                                        value="{{ old('stock') }}">
-                            </div>
+                            </div> --}}
 
                             <!-- Stock mínimo -->
-                            <div class="col-md-4 mb-3">
+                            {{-- <div class="col-md-4 mb-3">
                                 <label class="form-label">Stock mínimo</label>
                                 <input type="number" step="0.01" name="stock_minimo"
                                        class="form-control"
                                        value="{{ old('stock_minimo') }}">
-                            </div>
+                            </div> --}}
 
                             <!-- Precio -->
                             <div class="col-md-4 mb-3">

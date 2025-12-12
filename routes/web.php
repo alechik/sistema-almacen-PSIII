@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AlmacenController;
+use App\Http\Controllers\AlmacenProductoController;
 use App\Http\Controllers\AlmacenUserController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\DashboardController;
@@ -211,6 +212,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/salidas/{salida}/pdf', [SalidaController::class, 'pdf'])
         ->name('salidas.pdf');
 });
+
+Route::middleware('auth')->group(function () {
+    Route::get('/almacen-productos', [AlmacenProductoController::class, 'index'])->name('almacen-productos.index');
+    Route::get('/almacen-productos/create', [AlmacenProductoController::class, 'create'])->name('almacen-productos.create');
+    Route::post('/almacen-productos', [AlmacenProductoController::class, 'store'])->name('almacen-productos.store');
+    Route::get('/almacen-productos/{almacenProducto}', [AlmacenProductoController::class, 'show'])->name('almacen-productos.show');
+    Route::get('/almacen-productos/{almacenProducto}/edit', [AlmacenProductoController::class, 'edit'])->name('almacen-productos.edit');
+    Route::put('/almacen-productos/{almacenProducto}', [AlmacenProductoController::class, 'update'])->name('almacen-productos.update');
+    Route::delete('/almacen-productos/{almacenProducto}', [AlmacenProductoController::class, 'destroy'])->name('almacen-productos.destroy');
+});
+
+
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('reportes')->group(function () {

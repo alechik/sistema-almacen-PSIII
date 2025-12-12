@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('nombre', 150);
             $table->text('descripcion')->nullable();
-            $table->decimal('stock', 12, 2)->default(0);
+            // $table->decimal('stock', 12, 2)->default(0);
             $table->date('fech_vencimiento')->nullable();
             $table->integer('estado')->default(1);
-            $table->decimal('stock_minimo', 12, 2)->nullable();
+            // $table->decimal('stock_minimo', 12, 2)->nullable();
             $table->string('cod_producto', 100)->unique()->nullable();
             $table->decimal('precio', 12, 2)->nullable();
 

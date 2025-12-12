@@ -119,7 +119,7 @@
                     </li>
                   </ul>
                 </li>
-                <li class="nav-item {{ request()->routeIs('categorias.*','productos.*','unidad-medidas.*') ? 'menu-open' : '' }}">
+                <li class="nav-item {{ request()->routeIs('categorias.*','productos.*','unidad-medidas.*','almacen-productos.*') ? 'menu-open' : '' }}">
                   <a href="#" class="nav-link">
                     <i class="nav-icon bi bi-tags"></i>
                     <p>
@@ -132,6 +132,12 @@
                       <a href="{{route('productos.index')}}" class="nav-link {{ request()->routeIs('productos.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-bag-check"></i>
                         <p>Productos</p>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="{{route('almacen-productos.index')}}" class="nav-link {{ request()->routeIs('almacen-productos.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-bag-check"></i>
+                        <p>Asignar a almacén</p>
                       </a>
                     </li>
                     <li class="nav-item">

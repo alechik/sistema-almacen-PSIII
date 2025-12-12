@@ -70,7 +70,7 @@
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Unidad</th>
-                                <th>Stock</th>
+                                {{-- <th>Stock</th> --}}
                                 <th>Categoría</th>
                                 <th>Proveedor</th>
                                 <th>Estado</th>
@@ -104,7 +104,7 @@
                                 </td>
 
                                 {{-- STOCK MEJORADO --}}
-                                <td class="text-center">
+                                {{-- <td class="text-center">
                                     @if ($producto->stock <= $producto->stock_minimo)
                                         <span class="badge bg-danger">
                                             {{ $producto->stock }}
@@ -118,7 +118,7 @@
                                             {{ $producto->stock }}
                                         </span>
                                     @endif
-                                </td>
+                                </td> --}}
 
                                 <td>{{ $producto->categoria->nombre ?? '-' }}</td>
 

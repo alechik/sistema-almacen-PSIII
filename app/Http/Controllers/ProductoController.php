@@ -53,8 +53,8 @@ class ProductoController extends Controller
             'proveedor_id' => 'required|integer',
             'unidad_medida_id' => 'required|integer|exists:unidad_medidas,id',
 
-            'stock' => 'nullable|numeric|min:0',
-            'stock_minimo' => 'nullable|numeric|min:0',
+            // 'stock' => 'nullable|numeric|min:0',
+            // 'stock_minimo' => 'nullable|numeric|min:0',
             'precio' => 'nullable|numeric|min:0',
             'fech_vencimiento' => 'nullable|date',
         ];
@@ -115,8 +115,8 @@ class ProductoController extends Controller
             'proveedor_id' => 'required|integer',
             'unidad_medida_id' => 'required|integer|exists:unidad_medidas,id',
 
-            'stock' => 'nullable|numeric|min:0',
-            'stock_minimo' => 'nullable|numeric|min:0',
+            // 'stock' => 'nullable|numeric|min:0',
+            // 'stock_minimo' => 'nullable|numeric|min:0',
             'precio' => 'nullable|numeric|min:0',
             'fech_vencimiento' => 'nullable|date',
         ];

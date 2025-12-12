@@ -51,4 +51,8 @@ class Almacen extends Model
     {
         return $this->hasMany(Pedido::class);
     }
+    public function almacenProductos()
+    {
+        return $this->hasMany(AlmacenProducto::class, 'almacen_id', 'id');
+    }
 }

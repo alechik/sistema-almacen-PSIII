@@ -14,16 +14,16 @@ class Producto extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
-        'stock',
+        // 'stock',
         'fech_vencimiento',
         'estado',
-        'stock_minimo',
+        // 'stock_minimo',
         'categoria_id',
         'cod_producto',
         'precio',
         'proveedor_id',
         'unidad_medida_id',
-        'en_pedido'
+        // 'en_pedido'
     ];
 
     /*
@@ -47,20 +47,24 @@ class Producto extends Model
     // }
 
     // Relación con detalle de ingresos
-    // public function detallesIngreso()
-    // {
-    //     return $this->hasMany(DetalleIngreso::class);
-    // }
+    public function detallesIngreso()
+    {
+        return $this->hasMany(DetalleIngreso::class);
+    }
 
     // Relación con detalle de salidas
-    // public function detallesSalida()
-    // {
-    //     return $this->hasMany(DetalleSalida::class);
-    // }
+    public function detallesSalida()
+    {
+        return $this->hasMany(DetalleSalida::class);
+    }
 
     // Relación con detalle de pedidos
     public function detallesPedido()
     {
         return $this->hasMany(DetallePedido::class);
+    }
+    public function almacenProductos()
+    {
+        return $this->hasMany(AlmacenProducto::class, 'producto_id', 'id');
     }
 }
