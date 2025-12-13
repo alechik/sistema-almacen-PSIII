@@ -25,7 +25,7 @@ class PedidoAsignacionController extends Controller
         $validator = Validator::make($request->all(), [
             'envio_id' => 'required|integer',
             'envio_codigo' => 'required|string',
-            'estado' => 'required|string|in:asignado,aceptado,en_transito,entregado,cancelado',
+            'estado' => 'required|string|in:asignado,aceptado,en_proceso,en_transito,entregado,cancelado',
             'transportista' => 'required|array',
             'transportista.id' => 'required|integer|min:1',
             'transportista.nombre' => 'nullable|string',
@@ -102,11 +102,33 @@ class PedidoAsignacionController extends Controller
                 }
             }
 
+            // Actualizar estado del pedido según el estado del envío
+            // Si el estado es "en_proceso", significa que el transportista aceptó el envío
+            if ($request->estado === 'en_proceso' || $request->estado === 'aceptado') {
+                // El pedido está en proceso cuando el transportista acepta
+                $pedido->estado = Pedido::EN_PROCESO;
+                Log::info('Pedido marcado como en proceso (transportista aceptó)', [
+                    'pedido_id' => $pedidoId,
+                    'estado_anterior' => $pedido->getOriginal('estado'),
+                    'estado_nuevo' => $pedido->estado,
+                ]);
+            } elseif ($request->estado === 'asignado') {
+                // El pedido está asignado pero aún no aceptado por el transportista
+                // Mantener el estado actual o actualizar si es necesario
+                Log::info('Pedido asignado a transportista (pendiente de aceptación)', [
+                    'pedido_id' => $pedidoId,
+                    'estado' => $pedido->estado,
+                ]);
+            }
+
             // Guardar información adicional del envío en observaciones
             $infoEnvio = "\n--- Información de Envío ---\n";
             $infoEnvio .= "Envío ID (plantaCruds): {$request->envio_id}\n";
             $infoEnvio .= "Código Envío: {$request->envio_codigo}\n";
             $infoEnvio .= "Estado: {$request->estado}\n";
+            if ($request->fecha_aceptacion) {
+                $infoEnvio .= "Fecha aceptación: {$request->fecha_aceptacion}\n";
+            }
             if ($request->fecha_estimada_entrega) {
                 $infoEnvio .= "Fecha estimada entrega: {$request->fecha_estimada_entrega}\n";
             }

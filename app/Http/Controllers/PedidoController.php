@@ -156,8 +156,6 @@ class PedidoController extends Controller
         $validated = $request->validate([
             'codigo_comprobante' => 'required|string',
             'fecha' => 'required|date',
-            'fecha_min' => 'required|date',
-            'fecha_max' => 'required|date|after_or_equal:fecha_min',
             'almacen_id' => 'required|exists:almacens,id',
             'proveedor_id' => 'nullable', // Fijo como Planta (1)
             'operador_id' => 'nullable', // Ya no es necesario
@@ -179,8 +177,8 @@ class PedidoController extends Controller
         $pedido = Pedido::create([
             'codigo_comprobante' => $codigo,
             'fecha' => $request->fecha,
-            'fecha_min' => $request->fecha_min,
-            'fecha_max' => $request->fecha_max,
+            'fecha_min' => $request->fecha, // Usar la misma fecha como fecha_min
+            'fecha_max' => $request->fecha, // Usar la misma fecha como fecha_max
             'estado' => Pedido::EMITIDO,
             'almacen_id' => $request->almacen_id,
             'proveedor_id' => 1, // Fijo: Planta
@@ -310,8 +308,8 @@ class PedidoController extends Controller
         // CABECERA
         $pedido->update([
             'fecha' => $request->fecha,
-            'fecha_min' => $request->fecha_min,
-            'fecha_max' => $request->fecha_max,
+            'fecha_min' => $request->fecha, // Usar la misma fecha como fecha_min
+            'fecha_max' => $request->fecha, // Usar la misma fecha como fecha_max
             'almacen_id' => $request->almacen_id,
             'proveedor_id' => 1, // Fijo: Planta
             'operador_id' => null, // Ya no es necesario

@@ -14,6 +14,7 @@ class Pedido extends Model
     const ENVIADO_TRAZABILIDAD = 5; //enviado a Trazabilidad, pendiente aprobación
     const APROBADO_TRAZABILIDAD = 6; //aprobado en Trazabilidad
     const RECHAZADO_TRAZABILIDAD = 7; //rechazado en Trazabilidad
+    const EN_PROCESO = 8; //transportista aceptó el envío, pedido en proceso
     
     // Estados de Trazabilidad
     const TRAZABILIDAD_PENDIENTE = 'pendiente';

@@ -67,39 +67,43 @@
                                     readonly>
                             </div>
 
-                            <!-- FECHA -->
+                            <!-- FECHA DE ENTREGA DESEADA -->
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Fecha *</label>
+                                <label class="form-label fw-bold">Fecha de Entrega Deseada *</label>
                                 <input type="date" name="fecha" class="form-control"
-                                    value="{{ old('fecha', now()->format('Y-m-d')) }}">
-                            </div>
-
-                            <!-- FECHA MIN -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Fecha Mínima *</label>
-                                <input type="date" name="fecha_min" class="form-control"
-                                    value="{{ old('fecha_min', now()->format('Y-m-d')) }}">
-                            </div>
-                        </div>
-
-                        <div class="row">
-
-                            <!-- FECHA MAX -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Fecha Máxima *</label>
-                                <input type="date" name="fecha_max" class="form-control"
-                                    value="{{ old('fecha_max', now()->addDays(7)->format('Y-m-d')) }}">
+                                    value="{{ old('fecha', now()->format('Y-m-d')) }}" 
+                                    min="{{ now()->format('Y-m-d') }}"
+                                    required>
+                                <small class="text-muted">Seleccione la fecha en que desea recibir el pedido en el almacén</small>
                             </div>
 
                             <!-- ALMACEN -->
                             <div class="col-md-8 mb-3">
                                 <label class="form-label fw-bold">Almacén *</label>
-                                <select name="almacen_id" id="almacen_id" class="form-select" required>
+                                <select name="almacen_id" id="almacen_id" class="form-select" required onchange="mostrarUbicacionAlmacen(this)">
                                     <option value="">Seleccione...</option>
                                     @foreach($almacenes as $a)
-                                        <option value="{{ $a->id }}">{{ $a->nombre }}</option>
+                                        <option value="{{ $a->id }}" 
+                                                data-nombre="{{ $a->nombre }}"
+                                                data-latitud="{{ $a->latitud }}"
+                                                data-longitud="{{ $a->longitud }}"
+                                                data-ubicacion="{{ $a->ubicacion }}">
+                                            {{ $a->nombre }}
+                                        </option>
                                     @endforeach
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- MAPA DE UBICACIÓN DEL ALMACÉN -->
+                            <div class="col-md-12 mb-3" id="mapa_almacen_container" style="display: none;">
+                                <label class="form-label fw-bold">Ubicación del Almacén Seleccionado</label>
+                                <div id="mapa_almacen" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ddd;"></div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Esta es la ubicación del almacén seleccionado. Esta información se enviará a Trazabilidad y luego a PlantaCruds para el envío.
+                                </small>
                             </div>
                         </div>
 
@@ -152,10 +156,87 @@
 
 </main>
 
+@push('styles')
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
+
 @push('scripts')
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 let index = 0;
 const productosTrazabilidad = @json($productosTrazabilidad ?? []);
+let mapaAlmacen = null;
+let marcadorAlmacen = null;
+
+// Función para mostrar la ubicación del almacén en el mapa
+function mostrarUbicacionAlmacen(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const container = document.getElementById('mapa_almacen_container');
+    const mapaDiv = document.getElementById('mapa_almacen');
+    
+    if (select.value && selectedOption.getAttribute('data-latitud') && selectedOption.getAttribute('data-longitud')) {
+        const latitud = parseFloat(selectedOption.getAttribute('data-latitud'));
+        const longitud = parseFloat(selectedOption.getAttribute('data-longitud'));
+        const nombre = selectedOption.getAttribute('data-nombre');
+        const ubicacion = selectedOption.getAttribute('data-ubicacion');
+        
+        // Mostrar el contenedor del mapa
+        container.style.display = 'block';
+        
+        // Inicializar o actualizar el mapa
+        if (!mapaAlmacen) {
+            mapaAlmacen = L.map('mapa_almacen').setView([latitud, longitud], 15);
+            
+            // Agregar capa de OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(mapaAlmacen);
+        } else {
+            mapaAlmacen.setView([latitud, longitud], 15);
+        }
+        
+        // Remover marcador anterior si existe
+        if (marcadorAlmacen) {
+            mapaAlmacen.removeLayer(marcadorAlmacen);
+        }
+        
+        // Agregar nuevo marcador
+        marcadorAlmacen = L.marker([latitud, longitud]).addTo(mapaAlmacen);
+        
+        // Agregar popup con información del almacén
+        const popupContent = `
+            <strong>${nombre}</strong><br>
+            ${ubicacion ? `Dirección: ${ubicacion}<br>` : ''}
+            Coordenadas: ${latitud.toFixed(6)}, ${longitud.toFixed(6)}
+        `;
+        marcadorAlmacen.bindPopup(popupContent).openPopup();
+        
+        // Asegurar que el mapa se renderice correctamente
+        setTimeout(() => {
+            if (mapaAlmacen) {
+                mapaAlmacen.invalidateSize();
+            }
+        }, 100);
+    } else {
+        // Ocultar el mapa si no hay almacén seleccionado o no tiene coordenadas
+        container.style.display = 'none';
+        if (marcadorAlmacen) {
+            mapaAlmacen.removeLayer(marcadorAlmacen);
+            marcadorAlmacen = null;
+        }
+    }
+}
+
+// Ejecutar al cargar la página si hay un almacén preseleccionado
+document.addEventListener('DOMContentLoaded', () => {
+    const almacenSelect = document.getElementById('almacen_id');
+    if (almacenSelect && almacenSelect.value) {
+        mostrarUbicacionAlmacen(almacenSelect);
+    }
+});
 
 /* ============================
    CARGAR PRODUCTOS DESDE TRAZABILIDAD

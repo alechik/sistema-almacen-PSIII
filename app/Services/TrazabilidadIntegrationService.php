@@ -155,14 +155,14 @@ class TrazabilidadIntegrationService
             'pedido_id' => $pedido->id,
             'codigo_comprobante' => $pedido->codigo_comprobante,
             'fecha' => $pedido->fecha ? $pedido->fecha->format('Y-m-d') : null,
-            'fecha_min' => $pedido->fecha_min ? $pedido->fecha_min->format('Y-m-d') : null,
-            'fecha_max' => $pedido->fecha_max ? $pedido->fecha_max->format('Y-m-d') : null,
+            'fecha_min' => $pedido->fecha ? $pedido->fecha->format('Y-m-d') : null, // Usar fecha como fecha_min
+            'fecha_max' => $pedido->fecha ? $pedido->fecha->format('Y-m-d') : null, // Usar fecha como fecha_max
             'almacen' => [
                 'id' => $almacen->id ?? null,
                 'nombre' => $almacen->nombre ?? 'Almacén no especificado',
-                'latitud' => $almacen->latitud ?? null,
-                'longitud' => $almacen->longitud ?? null,
-                'direccion' => $almacen->ubicacion ?? $almacen->nombre ?? null,
+                'latitud' => $almacen->latitud ?? null, // Latitud del almacén (no debe cambiar después de enviar)
+                'longitud' => $almacen->longitud ?? null, // Longitud del almacén (no debe cambiar después de enviar)
+                'direccion' => $almacen->ubicacion ?? $almacen->nombre ?? null, // Dirección del almacén (no debe cambiar después de enviar)
             ],
             'administrador' => [
                 'id' => $administrador->id ?? null,
