@@ -143,8 +143,8 @@
 <div class="content-box">
   <strong>Almacén:</strong> {{ $pedido->almacen->nombre }} <br>
   <strong>Proveedor:</strong> {{ collect($proveedores)->firstWhere('id',$pedido->proveedor_id)['nombre'] ?? 'No definido' }} <br>
-  <strong>Operador:</strong> {{ $pedido->operador->full_name ?? '-' }} <br>
-  <strong>Transportista:</strong> {{ $pedido->transportista->full_name ?? '-' }} <br>
+  <strong>Operador:</strong> {{ $pedido->operador ? $pedido->operador->full_name : '-' }} <br>
+  <strong>Transportista:</strong> {{ $pedido->transportista ? $pedido->transportista->full_name : '-' }} <br>
 </div>
 
 
@@ -162,7 +162,7 @@
     <tbody>
       @foreach($pedido->detalles as $d)
       <tr>
-        <td>{{ $d->producto->nombre }}</td>
+        <td>{{ $d->producto_nombre ?? ($d->producto->nombre ?? 'Producto sin nombre') }}</td>
         <td style="text-align:center">{{ $d->cantidad }}</td>
       </tr>
       @endforeach

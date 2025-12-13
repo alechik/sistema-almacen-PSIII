@@ -57,6 +57,7 @@
                                 <th>Administrador</th>
                                 <th>Fecha</th>
                                 <th>Estado</th>
+                                <th>Trazabilidad</th>
                                 <th width="160px">Acciones</th>
                             </tr>
                         </thead>
@@ -89,8 +90,33 @@
                                         <span class="badge bg-warning text-dark">CONFIRMADO</span>
                                     @elseif ($pedido->estado == 3)
                                         <span class="badge bg-success">TERMINADO</span>
+                                    @elseif ($pedido->estado == 5)
+                                        <span class="badge bg-info">ENVIADO TRAZABILIDAD</span>
+                                    @elseif ($pedido->estado == 6)
+                                        <span class="badge bg-success">APROBADO TRAZABILIDAD</span>
+                                    @elseif ($pedido->estado == 7)
+                                        <span class="badge bg-danger">RECHAZADO TRAZABILIDAD</span>
                                     @else
                                         <span class="badge bg-secondary">ANULADO</span>
+                                    @endif
+                                </td>
+
+                                <td>
+                                    @if ($pedido->enviado_a_trazabilidad)
+                                        @if ($pedido->trazabilidad_estado == 'pendiente')
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        @elseif ($pedido->trazabilidad_estado == 'aprobado')
+                                            <span class="badge bg-success">Aprobado</span>
+                                        @elseif ($pedido->trazabilidad_estado == 'rechazado')
+                                            <span class="badge bg-danger">Rechazado</span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ $pedido->trazabilidad_estado ?? 'N/A' }}</span>
+                                        @endif
+                                        @if ($pedido->trazabilidad_tracking_id)
+                                            <br><small class="text-muted">ID: {{ $pedido->trazabilidad_tracking_id }}</small>
+                                        @endif
+                                    @else
+                                        <span class="badge bg-secondary">No enviado</span>
                                     @endif
                                 </td>
 

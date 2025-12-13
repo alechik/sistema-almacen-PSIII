@@ -7,17 +7,26 @@ use App\Models\DetallePedido;
 use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\User;
+use App\Services\TrazabilidadIntegrationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PedidoController extends Controller
 {
+    protected TrazabilidadIntegrationService $trazabilidadService;
+
     private $proveedores = [
         ['id' => 1, 'nombre' => 'Proveedor 1'],
         ['id' => 2, 'nombre' => 'Proveedor 2'],
         ['id' => 3, 'nombre' => 'Proveedor 3'],
     ];
+
+    public function __construct(TrazabilidadIntegrationService $trazabilidadService)
+    {
+        $this->trazabilidadService = $trazabilidadService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -25,7 +34,7 @@ class PedidoController extends Controller
     {
         $user = Auth::user();
 
-        // PROPIETARIO → ve los pedidos de todos sus administradores
+        // PROPIETARIO → ve los pedidos de todos sus administradores Y sus propios pedidos
         if ($user->hasRole('propietario')) {
 
             // IDs de todos sus administradores
@@ -33,7 +42,11 @@ class PedidoController extends Controller
                 ->where('user_id', $user->id)
                 ->pluck('id');
 
-            $pedidos = Pedido::whereIn('administrador_id', $admins)
+            // Pedidos de administradores + pedidos donde el propietario es el administrador
+            $pedidos = Pedido::where(function($query) use ($admins, $user) {
+                    $query->whereIn('administrador_id', $admins)
+                          ->orWhere('administrador_id', $user->id);
+                })
                 ->with(['almacen', 'administrador'])
                 ->orderBy('id', 'desc')
                 ->paginate(10);
@@ -79,18 +92,63 @@ class PedidoController extends Controller
 
     public function create()
     {
-        $admin = Auth::user();
-        $propietarioId = $admin->user_id ?? $admin->id;
+        $user = Auth::user();
+        
+        // Permitir acceso a propietarios y administradores
+        if (!$user->hasAnyRole(['propietario', 'administrador'])) {
+            abort(403, 'No tienes permisos para crear pedidos');
+        }
+
+        $propietarioId = $user->user_id ?? $user->id;
 
         $lastId = Pedido::max('id') ?? 0;
 
-        // Almacenes asignados al administrador
-        $almacenes = $admin->almacenes;
+        // Si es propietario, mostrar sus almacenes creados
+        // Si es administrador, mostrar almacenes asignados
+        if ($user->hasRole('propietario')) {
+            $almacenes = Almacen::where('user_id', $user->id)->get();
+        } else {
+            $almacenes = $user->almacenes;
+        }
 
-        // Proveedores
-        $proveedores = $this->proveedores;
+        // Obtener productos desde Trazabilidad
+        $productosTrazabilidad = $this->getProductosFromTrazabilidad();
 
-        return view('pedidos.create', compact('almacenes', 'proveedores', 'lastId'));
+        // Proveedor fijo: Planta (ID 1)
+        $proveedorPlanta = ['id' => 1, 'nombre' => 'Planta'];
+
+        return view('pedidos.create', compact('almacenes', 'lastId', 'productosTrazabilidad', 'proveedorPlanta'));
+    }
+
+    /**
+     * Obtiene productos desde la API de Trazabilidad
+     */
+    private function getProductosFromTrazabilidad(): array
+    {
+        $trazabilidadUrl = env('TRAZABILIDAD_API_URL', 'http://localhost:8000/api');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->get("{$trazabilidadUrl}/products");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                // Si es una respuesta paginada, obtener los datos
+                if (isset($data['data'])) {
+                    return $data['data'];
+                }
+                // Si es un array directo
+                if (is_array($data)) {
+                    return $data;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Error al obtener productos desde Trazabilidad', [
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return [];
     }
 
     public function store(Request $request)
@@ -101,12 +159,13 @@ class PedidoController extends Controller
             'fecha_min' => 'required|date',
             'fecha_max' => 'required|date|after_or_equal:fecha_min',
             'almacen_id' => 'required|exists:almacens,id',
-            'proveedor_id' => 'required',
-            'operador_id' => 'required|exists:users,id',
-            'transportista_id' => 'required|exists:users,id',
+            'proveedor_id' => 'nullable', // Fijo como Planta (1)
+            'operador_id' => 'nullable', // Ya no es necesario
+            'transportista_id' => 'nullable', // Ya no es necesario
             'productos' => 'required|array|min:1',
-            'productos.*.producto_id' => 'required|exists:productos,id',
-            'productos.*.cantidad' => 'required|numeric|min:1',
+            'productos.*.producto_id' => 'required', // Ya no valida contra tabla local
+            'productos.*.producto_nombre' => 'required|string', // Nombre del producto desde Trazabilidad
+            'productos.*.cantidad' => 'required|numeric|min:0.01',
         ]);
 
         $user = Auth::user();
@@ -124,18 +183,63 @@ class PedidoController extends Controller
             'fecha_max' => $request->fecha_max,
             'estado' => Pedido::EMITIDO,
             'almacen_id' => $request->almacen_id,
-            'proveedor_id' => $request->proveedor_id,
-            'operador_id' => $request->operador_id,
-            'transportista_id' => $request->transportista_id,
+            'proveedor_id' => 1, // Fijo: Planta
+            'operador_id' => null, // Ya no es necesario
+            'transportista_id' => null, // Ya no es necesario
             'administrador_id' => $user->id,
         ]);
 
+        // Crear productos del pedido
+        // Nota: Los productos vienen desde Trazabilidad, así que guardamos el nombre
+        // Si el producto existe localmente, usamos su ID, si no, guardamos null y el nombre
         foreach ($request->productos as $item) {
+            $productoId = null;
+            $productoTrazabilidadId = null;
+            
+            // El producto_id viene de Trazabilidad
+            if (isset($item['producto_id']) && is_numeric($item['producto_id'])) {
+                $productoTrazabilidadId = $item['producto_id'];
+                
+                // Intentar buscar producto local por ID de Trazabilidad
+                $productoLocal = Producto::find($item['producto_id']);
+                if ($productoLocal) {
+                    $productoId = $productoLocal->id;
+                }
+            }
+            
+            // Si no se encontró por ID, buscar por nombre
+            if (!$productoId && isset($item['producto_nombre'])) {
+                $productoLocal = Producto::where('nombre', $item['producto_nombre'])->first();
+                if ($productoLocal) {
+                    $productoId = $productoLocal->id;
+                }
+            }
+            
             DetallePedido::create([
                 'pedido_id' => $pedido->id,
-                'producto_id' => $item['producto_id'],
+                'producto_id' => $productoId, // Puede ser null si viene de Trazabilidad
+                'producto_trazabilidad_id' => $productoTrazabilidadId, // ID de Trazabilidad
+                'producto_nombre' => $item['producto_nombre'] ?? null, // Nombre desde Trazabilidad
                 'cantidad' => $item['cantidad'],
             ]);
+        }
+
+        // Si es propietario, enviar automáticamente a Trazabilidad
+        if ($user->hasRole('propietario')) {
+            try {
+                $result = $this->trazabilidadService->sendPedidoToTrazabilidad($pedido);
+                
+                return redirect()->route('pedidos.index')
+                    ->with('success', 'Pedido creado y enviado a Trazabilidad exitosamente. Tracking ID: ' . ($result['tracking_id'] ?? 'N/A'));
+            } catch (\Exception $e) {
+                Log::error('Error al enviar pedido a Trazabilidad', [
+                    'pedido_id' => $pedido->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return redirect()->route('pedidos.index')
+                    ->with('warning', 'Pedido creado exitosamente, pero hubo un error al enviarlo a Trazabilidad: ' . $e->getMessage());
+            }
         }
 
         return redirect()->route('pedidos.create')
@@ -173,27 +277,17 @@ class PedidoController extends Controller
         // Almacenes del propietario
         $almacenes = Almacen::where('user_id', $propietarioId)->get();
 
-        // Operadores del propietario
-        $operadores = User::role('operador')
-            ->where('user_id', $propietarioId)
-            ->get();
+        // Obtener productos desde Trazabilidad
+        $productosTrazabilidad = $this->getProductosFromTrazabilidad();
 
-        // Transportistas del propietario
-        $transportistas = User::role('transportista')
-            ->where('user_id', $propietarioId)
-            ->get();
-
-        // Productos filtrados por proveedor actual del pedido
-        $productos = Producto::where('proveedor_id', $pedido->proveedor_id)
-            ->where('estado', 1)
-            ->get();
+        // Proveedor fijo: Planta (ID 1)
+        $proveedorPlanta = ['id' => 1, 'nombre' => 'Planta'];
 
         return view('pedidos.edit', compact(
             'pedido',
             'almacenes',
-            'operadores',
-            'transportistas',
-            'productos'
+            'productosTrazabilidad',
+            'proveedorPlanta'
         ) + ['proveedores' => $this->proveedores]);
     }
 
@@ -203,15 +297,14 @@ class PedidoController extends Controller
             'fecha' => 'required|date',
             'fecha_min' => 'required|date',
             'fecha_max' => 'required|date|after_or_equal:fecha_min',
-
             'almacen_id' => 'required|exists:almacens,id',
-            'proveedor_id' => 'required',
-            'operador_id' => 'required|exists:users,id',
-            'transportista_id' => 'required|exists:users,id',
-
+            'proveedor_id' => 'nullable', // Fijo como Planta (1)
+            'operador_id' => 'nullable', // Ya no es necesario
+            'transportista_id' => 'nullable', // Ya no es necesario
             'productos' => 'required|array|min:1',
-            'productos.*.producto_id' => 'required|exists:productos,id',
-            'productos.*.cantidad' => 'required|numeric|min:1',
+            'productos.*.producto_id' => 'required', // Ya no valida contra tabla local
+            'productos.*.producto_nombre' => 'required|string', // Nombre del producto desde Trazabilidad
+            'productos.*.cantidad' => 'required|numeric|min:0.01',
         ]);
 
         // CABECERA
@@ -220,18 +313,42 @@ class PedidoController extends Controller
             'fecha_min' => $request->fecha_min,
             'fecha_max' => $request->fecha_max,
             'almacen_id' => $request->almacen_id,
-            'proveedor_id' => $request->proveedor_id,
-            'operador_id' => $request->operador_id,
-            'transportista_id' => $request->transportista_id,
+            'proveedor_id' => 1, // Fijo: Planta
+            'operador_id' => null, // Ya no es necesario
+            'transportista_id' => null, // Ya no es necesario
         ]);
 
         // DETALLE (Reemplazo total)
         DetallePedido::where('pedido_id', $pedido->id)->delete();
 
         foreach ($request->productos as $item) {
+            $productoId = null;
+            $productoTrazabilidadId = null;
+            
+            // El producto_id viene de Trazabilidad
+            if (isset($item['producto_id']) && is_numeric($item['producto_id'])) {
+                $productoTrazabilidadId = $item['producto_id'];
+                
+                // Intentar buscar producto local por ID de Trazabilidad
+                $productoLocal = Producto::find($item['producto_id']);
+                if ($productoLocal) {
+                    $productoId = $productoLocal->id;
+                }
+            }
+            
+            // Si no se encontró por ID, buscar por nombre
+            if (!$productoId && isset($item['producto_nombre'])) {
+                $productoLocal = Producto::where('nombre', $item['producto_nombre'])->first();
+                if ($productoLocal) {
+                    $productoId = $productoLocal->id;
+                }
+            }
+            
             DetallePedido::create([
                 'pedido_id' => $pedido->id,
-                'producto_id' => $item['producto_id'],
+                'producto_id' => $productoId, // Puede ser null si viene de Trazabilidad
+                'producto_trazabilidad_id' => $productoTrazabilidadId, // ID de Trazabilidad
+                'producto_nombre' => $item['producto_nombre'] ?? null, // Nombre desde Trazabilidad
                 'cantidad' => $item['cantidad'],
             ]);
         }
@@ -339,5 +456,64 @@ class PedidoController extends Controller
         );
 
         return $pdf->stream("pedido-{$pedido->codigo_comprobante}.pdf");
+    }
+
+    /**
+     * Enviar pedido a Trazabilidad manualmente
+     */
+    public function enviarATrazabilidad(Pedido $pedido)
+    {
+        $user = Auth::user();
+
+        // Solo propietario o administrador pueden enviar
+        if (!$user->hasAnyRole(['propietario', 'administrador'])) {
+            abort(403, 'No tienes permisos para enviar pedidos a Trazabilidad');
+        }
+
+        // Verificar que el pedido no haya sido enviado ya
+        if ($pedido->enviado_a_trazabilidad) {
+            return back()->with('warning', 'Este pedido ya fue enviado a Trazabilidad');
+        }
+
+        try {
+            // Cargar todas las relaciones necesarias
+            $pedido->load([
+                'almacen',
+                'administrador',
+                'operador',
+                'transportista',
+                'detalles.producto'
+            ]);
+            
+            // Verificar que el pedido tenga productos
+            if ($pedido->detalles->isEmpty()) {
+                return back()->with('error', 'El pedido no tiene productos. No se puede enviar a Trazabilidad.');
+            }
+            
+            Log::info('Iniciando envío de pedido a Trazabilidad', [
+                'pedido_id' => $pedido->id,
+                'codigo' => $pedido->codigo_comprobante,
+                'productos_count' => $pedido->detalles->count()
+            ]);
+            
+            $result = $this->trazabilidadService->sendPedidoToTrazabilidad($pedido);
+            
+            Log::info('Pedido enviado exitosamente', [
+                'pedido_id' => $pedido->id,
+                'tracking_id' => $result['tracking_id'] ?? null
+            ]);
+            
+            return back()->with('success', 'Pedido enviado a Trazabilidad exitosamente. Tracking ID: ' . ($result['tracking_id'] ?? 'N/A'));
+        } catch (\Exception $e) {
+            Log::error('Error al enviar pedido a Trazabilidad', [
+                'pedido_id' => $pedido->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return back()->with('error', 'Error al enviar pedido a Trazabilidad: ' . $e->getMessage());
+        }
     }
 }

@@ -11,6 +11,15 @@ class Pedido extends Model
     const CONFIRMADO = 2; //el propietario
     const TERMINADO = 3; //el proveedor lo marca como terminado
     const ANULADO = 4; //el propietario puede anular el pedido
+    const ENVIADO_TRAZABILIDAD = 5; //enviado a Trazabilidad, pendiente aprobación
+    const APROBADO_TRAZABILIDAD = 6; //aprobado en Trazabilidad
+    const RECHAZADO_TRAZABILIDAD = 7; //rechazado en Trazabilidad
+    
+    // Estados de Trazabilidad
+    const TRAZABILIDAD_PENDIENTE = 'pendiente';
+    const TRAZABILIDAD_APROBADO = 'aprobado';
+    const TRAZABILIDAD_RECHAZADO = 'rechazado';
+    
     protected $fillable = [
         'codigo_comprobante',
         'fecha',
@@ -21,7 +30,21 @@ class Pedido extends Model
         'operador_id',
         'transportista_id',
         'proveedor_id',
-        'administrador_id'
+        'administrador_id',
+        'trazabilidad_tracking_id',
+        'trazabilidad_estado',
+        'enviado_a_trazabilidad',
+        'fecha_envio_trazabilidad',
+        'fecha_respuesta_trazabilidad'
+    ];
+    
+    protected $casts = [
+        'fecha' => 'date',
+        'fecha_min' => 'date',
+        'fecha_max' => 'date',
+        'enviado_a_trazabilidad' => 'boolean',
+        'fecha_envio_trazabilidad' => 'datetime',
+        'fecha_respuesta_trazabilidad' => 'datetime',
     ];
 
     public function almacen()

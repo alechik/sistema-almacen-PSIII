@@ -83,7 +83,7 @@
                     </p>
                   </a>
                   <ul class="nav nav-treeview">
-                    @if (auth()->user()->hasAnyRole(['administrador']))
+                    @if (auth()->user()->hasAnyRole(['administrador', 'propietario']))
                       <li class="nav-item">
                         <a href="{{route('pedidos.create')}}" class="nav-link {{ request()->routeIs('pedidos.create') ? 'active' : '' }}">
                           <i class="nav-icon bi bi-file-earmark-plus"></i>

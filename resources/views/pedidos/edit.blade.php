@@ -57,14 +57,14 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Fecha *</label>
                                 <input type="date" name="fecha" class="form-control"
-                                    value="{{ old('fecha', $pedido->fecha) }}" required>
+                                    value="{{ old('fecha', $pedido->fecha->format('Y-m-d')) }}" required>
                             </div>
 
                             <!-- fecha min -->
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Fecha Mínima *</label>
                                 <input type="date" name="fecha_min" class="form-control"
-                                    value="{{ old('fecha_min', $pedido->fecha_min) }}" required>
+                                    value="{{ old('fecha_min', $pedido->fecha_min->format('Y-m-d')) }}" required>
                             </div>
                         </div>
 
@@ -73,7 +73,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Fecha Máxima *</label>
                                 <input type="date" name="fecha_max" class="form-control"
-                                    value="{{ old('fecha_max', $pedido->fecha_max) }}" required>
+                                    value="{{ old('fecha_max', $pedido->fecha_max->format('Y-m-d')) }}" required>
                             </div>
 
                             <!-- almacén -->
@@ -92,43 +92,11 @@
                         </div>
 
                         <div class="row">
-                            <!-- proveedor -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Proveedor *</label>
-                                <select name="proveedor_id" id="proveedor_id" class="form-select" required>
-                                    @foreach($proveedores as $p)
-                                        <option value="{{ $p['id'] }}"
-                                            {{ $pedido->proveedor_id == $p['id'] ? 'selected' : '' }}>
-                                            {{ $p['nombre'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <!-- operador -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Operador *</label>
-                                <select name="operador_id" id="operador_id" class="form-select" required>
-                                    @foreach($operadores as $o)
-                                        <option value="{{ $o->id }}"
-                                            {{ $pedido->operador_id == $o->id ? 'selected' : '' }}>
-                                            {{ $o->full_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <!-- transportista -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Transportista *</label>
-                                <select name="transportista_id" id="transportista_id" class="form-select" required>
-                                    @foreach($transportistas as $t)
-                                        <option value="{{ $t->id }}"
-                                            {{ $pedido->transportista_id == $t->id ? 'selected' : '' }}>
-                                            {{ $t->full_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <!-- PROVEEDOR (FIJO: PLANTA) -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Proveedor</label>
+                                <input type="hidden" name="proveedor_id" value="1">
+                                <input type="text" class="form-control" value="Planta" readonly>
                             </div>
                         </div>
 
@@ -161,17 +129,24 @@
                                     <td>
                                         <select name="productos[{{ $index }}][producto_id]"
                                                 class="form-select producto-select" required>
-                                            @foreach($productos as $prod)
-                                                <option value="{{ $prod->id }}"
-                                                    {{ $d->producto_id == $prod->id ? 'selected' : '' }}>
-                                                    {{ $prod->nombre }}
-                                                </option>
-                                            @endforeach
+                                            <option value="">Seleccione producto...</option>
+                                            @if(isset($productosTrazabilidad))
+                                                @foreach($productosTrazabilidad as $prod)
+                                                    <option value="{{ $prod->producto_id ?? $prod->id }}"
+                                                        data-nombre="{{ $prod->nombre }}"
+                                                        {{ ($d->producto_trazabilidad_id == ($prod->producto_id ?? $prod->id)) || ($d->producto_id == ($prod->producto_id ?? $prod->id)) ? 'selected' : '' }}>
+                                                        {{ $prod->nombre }} {{ $prod->codigo ? '(' . $prod->codigo . ')' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            @endif
                                         </select>
+                                        <input type="hidden" name="productos[{{ $index }}][producto_nombre]" 
+                                               class="producto-nombre-input" 
+                                               value="{{ $d->producto_nombre ?? ($d->producto->nombre ?? '') }}">
                                     </td>
 
                                     <td>
-                                        <input type="number" min="1"
+                                        <input type="number" min="0.01" step="0.01"
                                             name="productos[{{ $index }}][cantidad]"
                                             class="form-control"
                                             value="{{ $d->cantidad }}" required>
@@ -202,76 +177,90 @@
 @push('scripts')
 <script>
 let index = {{ $index ?? 0 }};
+const productosTrazabilidad = @json($productosTrazabilidad ?? []);
 
-/* =======================
-   CAMBIO DE ALMACÉN
-======================= */
-document.getElementById('almacen_id').addEventListener('change', function () {
-    let almacenId = this.value;
-
-    fetch(`/ajax/almacen/${almacenId}/usuarios`)
+/* ============================
+   CARGAR PRODUCTOS DESDE TRAZABILIDAD
+   ============================ */
+function cargarProductosTrazabilidad() {
+    const trazabilidadUrl = '{{ env("TRAZABILIDAD_API_URL", "http://localhost:8000/api") }}';
+    
+    fetch(`${trazabilidadUrl}/products`)
         .then(r => r.json())
         .then(data => {
-
-            let opSel = document.getElementById('operador_id');
-            let trSel = document.getElementById('transportista_id');
-
-            opSel.innerHTML = '<option value="">Seleccione...</option>';
-            trSel.innerHTML = '<option value="">Seleccione...</option>';
-
-            data.operadores.forEach(u => {
-                opSel.innerHTML += `<option value="${u.id}">${u.full_name}</option>`;
-            });
-
-            data.transportistas.forEach(u => {
-                trSel.innerHTML += `<option value="${u.id}">${u.full_name}</option>`;
-            });
-        });
-});
-
-/* =======================
-   CAMBIO DE PROVEEDOR:
-   CARGA PRODUCTOS DINÁMICAMENTE
-======================= */
-document.getElementById('proveedor_id').addEventListener('change', function () {
-
-    let proveedorId = this.value;
-
-    fetch(`/ajax/proveedor/${proveedorId}/productos`)
-        .then(r => r.json())
-        .then(productos => {
-
+            const productos = data.data || data || [];
+            
+            // Actualizar todos los selects de productos
             document.querySelectorAll('.producto-select').forEach(sel => {
-
-                let html = '<option value="">Seleccione producto...</option>';
-
+                const currentValue = sel.value;
+                sel.innerHTML = '<option value="">Seleccione producto...</option>';
+                
                 productos.forEach(p => {
-                    html += `<option value="${p.id}">${p.nombre}</option>`;
+                    const productoId = p.producto_id || p.id;
+                    const selected = currentValue == productoId ? 'selected' : '';
+                    sel.innerHTML += `<option value="${productoId}" data-nombre="${p.nombre}" ${selected}>${p.nombre} ${p.codigo ? '(' + p.codigo + ')' : ''}</option>`;
                 });
-
-                sel.innerHTML = html;
             });
+        })
+        .catch(error => {
+            console.error('Error al cargar productos desde Trazabilidad:', error);
+            // Usar productos cargados desde el servidor si hay error
+            if (productosTrazabilidad.length > 0) {
+                document.querySelectorAll('.producto-select').forEach(sel => {
+                    const currentValue = sel.value;
+                    sel.innerHTML = '<option value="">Seleccione producto...</option>';
+                    productosTrazabilidad.forEach(p => {
+                        const productoId = p.producto_id || p.id;
+                        const selected = currentValue == productoId ? 'selected' : '';
+                        sel.innerHTML += `<option value="${productoId}" data-nombre="${p.nombre}">${p.nombre} ${p.codigo ? '(' + p.codigo + ')' : ''}</option>`;
+                    });
+                });
+            }
         });
+}
 
+// Cargar productos al iniciar
+document.addEventListener('DOMContentLoaded', () => {
+    cargarProductosTrazabilidad();
+    
+    // Actualizar nombres de productos existentes
+    document.querySelectorAll('.producto-select').forEach(sel => {
+        sel.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const nombre = selectedOption.getAttribute('data-nombre') || '';
+            const row = this.closest('tr');
+            const nombreInput = row.querySelector('.producto-nombre-input');
+            if (nombreInput) {
+                nombreInput.value = nombre;
+            }
+        });
+    });
 });
 
-/* =======================
+/* ============================
    AGREGAR FILA
-======================= */
-document.getElementById('addRow').addEventListener('click', function () {
+   ============================ */
+document.getElementById('addRow').addEventListener('click', () => {
 
     const tbody = document.querySelector('#detalleTable tbody');
 
     let row = `
         <tr>
             <td>
-                <select name="productos[${index}][producto_id]" class="form-select producto-select" required>
+                <select name="productos[${index}][producto_id]"
+                        class="form-select producto-select" required>
                     <option value="">Seleccione producto...</option>
+                    ${productosTrazabilidad.map(p => {
+                        const productoId = p.producto_id || p.id;
+                        return `<option value="${productoId}" data-nombre="${p.nombre}">${p.nombre} ${p.codigo ? '(' + p.codigo + ')' : ''}</option>`;
+                    }).join('')}
                 </select>
+                <input type="hidden" name="productos[${index}][producto_nombre]" class="producto-nombre-input">
             </td>
 
             <td>
-                <input type="number" min="1" name="productos[${index}][cantidad]"
+                <input type="number" min="0.01" step="0.01"
+                       name="productos[${index}][cantidad]"
                        class="form-control" required>
             </td>
 
@@ -284,15 +273,39 @@ document.getElementById('addRow').addEventListener('click', function () {
     tbody.insertAdjacentHTML('beforeend', row);
     index++;
 
-    // cargar productos según proveedor actual
-    document.getElementById('proveedor_id').dispatchEvent(new Event('change'));
-
+    // Actualizar nombre del producto cuando se selecciona
+    const newSelect = tbody.querySelector('tr:last-child .producto-select');
+    const newNombreInput = tbody.querySelector('tr:last-child .producto-nombre-input');
+    
+    newSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const nombre = selectedOption.getAttribute('data-nombre') || '';
+        newNombreInput.value = nombre;
+    });
+    
+    // Si hay productos cargados desde Trazabilidad, recargar
+    if (productosTrazabilidad.length === 0) {
+        cargarProductosTrazabilidad();
+    }
 });
 
-/* =======================
+// Actualizar nombre del producto cuando cambia la selección
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('producto-select')) {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const nombre = selectedOption.getAttribute('data-nombre') || '';
+        const row = e.target.closest('tr');
+        const nombreInput = row.querySelector('.producto-nombre-input');
+        if (nombreInput) {
+            nombreInput.value = nombre;
+        }
+    }
+});
+
+/* ============================
    ELIMINAR FILA
-======================= */
-document.addEventListener('click', function (e) {
+   ============================ */
+document.addEventListener('click', e => {
     if (e.target.classList.contains('btnDelete')) {
         e.target.closest('tr').remove();
     }

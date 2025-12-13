@@ -44,11 +44,6 @@
                         <div class="col-md-4">
                             <strong>Estado:</strong>
                             <span class="badge bg-info">
-                                    {{-- const CANCELADO = 0;
-                                    const EMITIDO = 1;
-                                    const CONFIRMADO = 2;
-                                    const TERMINADO = 3;
-                                    const ANULADO = 4; --}}
                                 @if ($pedido->estado == 0)
                                     CANCELADO
                                 @elseif ($pedido->estado == 1)
@@ -57,12 +52,69 @@
                                     CONFIRMADO
                                 @elseif ($pedido->estado == 3)
                                     TERMINADO
+                                @elseif ($pedido->estado == 5)
+                                    ENVIADO TRAZABILIDAD
+                                @elseif ($pedido->estado == 6)
+                                    APROBADO TRAZABILIDAD
+                                @elseif ($pedido->estado == 7)
+                                    RECHAZADO TRAZABILIDAD
                                 @else
                                     ANULADO
                                 @endif
                             </span>
                         </div>
                     </div>
+
+                    @if ($pedido->enviado_a_trazabilidad)
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <h6 class="mb-2"><i class="bi bi-info-circle"></i> Estado en Trazabilidad</h6>
+                                <p class="mb-1">
+                                    <strong>Estado:</strong> 
+                                    @if ($pedido->trazabilidad_estado == 'pendiente')
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    @elseif ($pedido->trazabilidad_estado == 'aprobado')
+                                        <span class="badge bg-success">Aprobado</span>
+                                    @elseif ($pedido->trazabilidad_estado == 'rechazado')
+                                        <span class="badge bg-danger">Rechazado</span>
+                                    @else
+                                        <span class="badge bg-secondary">{{ $pedido->trazabilidad_estado ?? 'N/A' }}</span>
+                                    @endif
+                                </p>
+                                @if ($pedido->trazabilidad_tracking_id)
+                                    <p class="mb-1"><strong>Tracking ID:</strong> {{ $pedido->trazabilidad_tracking_id }}</p>
+                                @endif
+                                @if ($pedido->fecha_envio_trazabilidad)
+                                    <p class="mb-1"><strong>Fecha de envío:</strong> {{ $pedido->fecha_envio_trazabilidad->format('d/m/Y H:i') }}</p>
+                                @endif
+                                @if ($pedido->fecha_respuesta_trazabilidad)
+                                    <p class="mb-0"><strong>Fecha de respuesta:</strong> {{ $pedido->fecha_respuesta_trazabilidad->format('d/m/Y H:i') }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @elseif (!($pedido->enviado_a_trazabilidad ?? false))
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            @if (auth()->user()->hasAnyRole(['propietario', 'administrador']))
+                                <form action="{{ route('pedidos.enviar-trazabilidad', $pedido) }}" method="POST" class="d-inline" id="formEnviarTrazabilidad">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary" id="btnEnviarTrazabilidad">
+                                        <i class="bi bi-send"></i> Enviar a Trazabilidad
+                                    </button>
+                                </form>
+                                <script>
+                                document.getElementById('formEnviarTrazabilidad').addEventListener('submit', function(e) {
+                                    const btn = document.getElementById('btnEnviarTrazabilidad');
+                                    btn.disabled = true;
+                                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+                                });
+                                </script>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="row mb-2">
                         <div class="col-md-4">
@@ -90,14 +142,18 @@
                                 }}
                             </p>
                         </div>
+                        @if($pedido->operador_id && $pedido->operador)
                         <div class="col-md-4">
                             <strong>Operador:</strong>
                             <p>{{ $pedido->operador->full_name }}</p>
                         </div>
+                        @endif
+                        @if($pedido->transportista_id && $pedido->transportista)
                         <div class="col-md-4">
                             <strong>Transportista:</strong>
                             <p>{{ $pedido->transportista->full_name }}</p>
                         </div>
+                        @endif
                     </div>
 
                 </div>
@@ -120,7 +176,12 @@
                         <tbody>
                             @foreach($pedido->detalles as $d)
                                 <tr>
-                                    <td>{{ $d->producto->nombre }}</td>
+                                    <td>
+                                        {{ $d->producto_nombre ?? ($d->producto->nombre ?? 'Producto sin nombre') }}
+                                        @if($d->producto_trazabilidad_id)
+                                            <span class="badge bg-info ms-2">ID Trazabilidad: {{ $d->producto_trazabilidad_id }}</span>
+                                        @endif
+                                    </td>
                                     <td class="text-center">{{ $d->cantidad }}</td>
                                 </tr>
                             @endforeach
@@ -195,7 +256,7 @@
                     <tbody>
                         @foreach($pedido->detalles as $detalle)
                             <tr>
-                                <td>{{ $detalle->producto->nombre }}</td>
+                                <td>{{ $detalle->producto_nombre ?? ($detalle->producto->nombre ?? 'Producto sin nombre') }}</td>
                                 <td class="text-center">{{ $detalle->cantidad }}</td>
                             </tr>
                         @endforeach
@@ -263,7 +324,7 @@
                     <tbody>
                         @foreach($pedido->detalles as $detalle)
                             <tr>
-                                <td>{{ $detalle->producto->nombre }}</td>
+                                <td>{{ $detalle->producto_nombre ?? ($detalle->producto->nombre ?? 'Producto sin nombre') }}</td>
                                 <td class="text-center">{{ $detalle->cantidad }}</td>
                             </tr>
                         @endforeach

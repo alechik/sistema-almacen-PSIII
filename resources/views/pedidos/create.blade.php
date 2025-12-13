@@ -29,15 +29,22 @@
         <div class="app-content">
             <div class="container-fluid">
 
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $e)
-                                <li>{{ $e }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $e)
+                        <li>{{ $e }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if(auth()->user()->hasRole('propietario'))
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> 
+                <strong>Nota:</strong> Como propietario, este pedido se enviará automáticamente a Trazabilidad para su aprobación una vez que lo guardes.
+            </div>
+        @endif
 
                 <!-- ============================== -->
                 <!--  DATOS DEL PEDIDO              -->
@@ -97,32 +104,11 @@
                         </div>
 
                         <div class="row">
-
-                            <!-- PROVEEDOR -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Proveedor *</label>
-                                <select name="proveedor_id" id="proveedor_id" class="form-select" required>
-                                    <option value="">Seleccione...</option>
-                                    @foreach($proveedores as $p)
-                                        <option value="{{ $p['id'] }}">{{ $p['nombre'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <!-- OPERADOR -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Operador *</label>
-                                <select name="operador_id" id="operador_id" class="form-select" required>
-                                    <option value="">Seleccione...</option>
-                                </select>
-                            </div>
-
-                            <!-- TRANSPORTISTA -->
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Transportista *</label>
-                                <select name="transportista_id" id="transportista_id" class="form-select" required>
-                                    <option value="">Seleccione...</option>
-                                </select>
+                            <!-- PROVEEDOR (FIJO: PLANTA) -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Proveedor</label>
+                                <input type="hidden" name="proveedor_id" value="1">
+                                <input type="text" class="form-control" value="Planta" readonly>
                             </div>
                         </div>
 
@@ -169,52 +155,47 @@
 @push('scripts')
 <script>
 let index = 0;
+const productosTrazabilidad = @json($productosTrazabilidad ?? []);
 
 /* ============================
-   CAMBIO DE ALMACÉN
+   CARGAR PRODUCTOS DESDE TRAZABILIDAD
    ============================ */
-document.getElementById('almacen_id').addEventListener('change', function () {
-
-    let id = this.value;
-    if (!id) return;
-
-    fetch(`/ajax/almacen/${id}/usuarios`)
+function cargarProductosTrazabilidad() {
+    const trazabilidadUrl = '{{ env("TRAZABILIDAD_API_URL", "http://localhost:8000/api") }}';
+    
+    fetch(`${trazabilidadUrl}/products`)
         .then(r => r.json())
         .then(data => {
-
-            let opSel = document.getElementById('operador_id');
-            let trSel = document.getElementById('transportista_id');
-
-            opSel.innerHTML = '<option value="">Seleccione...</option>';
-            trSel.innerHTML = '<option value="">Seleccione...</option>';
-
-            data.operadores.forEach(u => {
-                opSel.innerHTML += `<option value="${u.id}">${u.full_name}</option>`;
-            });
-
-            data.transportistas.forEach(u => {
-                trSel.innerHTML += `<option value="${u.id}">${u.full_name}</option>`;
-            });
-        });
-});
-
-/* ============================
-   CAMBIO DE PROVEEDOR
-   ============================ */
-document.getElementById('proveedor_id').addEventListener('change', function () {
-
-    let id = this.value;
-    if (!id) return;
-
-    fetch(`/ajax/proveedor/${id}/productos`)
-        .then(r => r.json())
-        .then(data => {
-
+            const productos = data.data || data || [];
+            
+            // Actualizar todos los selects de productos
             document.querySelectorAll('.producto-select').forEach(sel => {
+                const currentValue = sel.value;
                 sel.innerHTML = '<option value="">Seleccione producto...</option>';
-                data.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.nombre}</option>`);
+                
+                productos.forEach(p => {
+                    const selected = currentValue == p.producto_id ? 'selected' : '';
+                    sel.innerHTML += `<option value="${p.producto_id}" data-nombre="${p.nombre}" ${selected}>${p.nombre} ${p.codigo ? '(' + p.codigo + ')' : ''}</option>`;
+                });
             });
+        })
+        .catch(error => {
+            console.error('Error al cargar productos desde Trazabilidad:', error);
+            // Usar productos cargados desde el servidor si hay error
+            if (productosTrazabilidad.length > 0) {
+                document.querySelectorAll('.producto-select').forEach(sel => {
+                    sel.innerHTML = '<option value="">Seleccione producto...</option>';
+                    productosTrazabilidad.forEach(p => {
+                        sel.innerHTML += `<option value="${p.producto_id}" data-nombre="${p.nombre}">${p.nombre} ${p.codigo ? '(' + p.codigo + ')' : ''}</option>`;
+                    });
+                });
+            }
         });
+}
+
+// Cargar productos al iniciar
+document.addEventListener('DOMContentLoaded', () => {
+    cargarProductosTrazabilidad();
 });
 
 /* ============================
@@ -230,11 +211,15 @@ document.getElementById('addRow').addEventListener('click', () => {
                 <select name="productos[${index}][producto_id]"
                         class="form-select producto-select" required>
                     <option value="">Seleccione producto...</option>
+                    ${productosTrazabilidad.map(p => 
+                        `<option value="${p.producto_id}" data-nombre="${p.nombre}">${p.nombre} ${p.codigo ? '(' + p.codigo + ')' : ''}</option>`
+                    ).join('')}
                 </select>
+                <input type="hidden" name="productos[${index}][producto_nombre]" class="producto-nombre-input">
             </td>
 
             <td>
-                <input type="number" min="1"
+                <input type="number" min="0.01" step="0.01"
                        name="productos[${index}][cantidad]"
                        class="form-control" required>
             </td>
@@ -248,8 +233,33 @@ document.getElementById('addRow').addEventListener('click', () => {
     tbody.insertAdjacentHTML('beforeend', row);
     index++;
 
-    // Recargar productos según proveedor actual
-    document.getElementById('proveedor_id').dispatchEvent(new Event('change'));
+    // Actualizar nombre del producto cuando se selecciona
+    const newSelect = tbody.querySelector('tr:last-child .producto-select');
+    const newNombreInput = tbody.querySelector('tr:last-child .producto-nombre-input');
+    
+    newSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const nombre = selectedOption.getAttribute('data-nombre') || '';
+        newNombreInput.value = nombre;
+    });
+    
+    // Si hay productos cargados desde Trazabilidad, recargar
+    if (productosTrazabilidad.length === 0) {
+        cargarProductosTrazabilidad();
+    }
+});
+
+// Actualizar nombre del producto cuando cambia la selección
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('producto-select')) {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const nombre = selectedOption.getAttribute('data-nombre') || '';
+        const row = e.target.closest('tr');
+        const nombreInput = row.querySelector('.producto-nombre-input');
+        if (nombreInput) {
+            nombreInput.value = nombre;
+        }
+    }
 });
 
 /* ============================

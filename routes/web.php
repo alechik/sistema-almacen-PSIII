@@ -165,6 +165,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('pedidos.confirmar');
     Route::put('/pedidos/{pedido}/anular', [PedidoController::class, 'anular'])
         ->name('pedidos.anular');
+    Route::post('/pedidos/{pedido}/enviar-trazabilidad', [PedidoController::class, 'enviarATrazabilidad'])
+        ->name('pedidos.enviar-trazabilidad');
 
     Route::get('/ajax/almacen/{almacen}/usuarios', [PedidoController::class, 'getUsuariosPorAlmacen']);
     Route::get('/ajax/proveedor/{proveedor}/productos', [PedidoController::class, 'getProductosPorProveedor']);
