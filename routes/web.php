@@ -153,13 +153,27 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 
+    // ==================== RUTAS ESPECÍFICAS (ANTES DE RUTAS DINÁMICAS) ====================
+    
     Route::get('/pedidos', [PedidoController::class, 'index'])->name('pedidos.index');
     Route::get('/pedidos/create', [PedidoController::class, 'create'])->name('pedidos.create');
     Route::post('/pedidos', [PedidoController::class, 'store'])->name('pedidos.store');
+    
+    // Seguimiento de pedidos (DEBE IR ANTES DE /pedidos/{pedido})
+    Route::get('/pedidos/seguimiento', [PedidoController::class, 'seguimiento'])
+        ->name('pedidos.seguimiento');
+    
+    // Documentación de pedidos (DEBE IR ANTES DE /pedidos/{pedido})
+    Route::get('/pedidos/documentacion', [PedidoController::class, 'documentacion'])
+        ->name('pedidos.documentacion');
+    
+    // ==================== RUTAS DINÁMICAS (DESPUÉS DE RUTAS ESPECÍFICAS) ====================
+    
     Route::get('/pedidos/{pedido}', [PedidoController::class, 'show'])->name('pedidos.show');
     Route::get('/pedidos/{pedido}/edit', [PedidoController::class, 'edit'])->name('pedidos.edit');
     Route::put('/pedidos/{pedido}', [PedidoController::class, 'update'])->name('pedidos.update');
     Route::delete('/pedidos/{pedido}', [PedidoController::class, 'destroy'])->name('pedidos.destroy');
+    
     // Cambiar el estado del pedido
     Route::put('/pedidos/{pedido}/confirmar', [PedidoController::class, 'confirmar'])
         ->name('pedidos.confirmar');
@@ -167,6 +181,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('pedidos.anular');
     Route::post('/pedidos/{pedido}/enviar-trazabilidad', [PedidoController::class, 'enviarATrazabilidad'])
         ->name('pedidos.enviar-trazabilidad');
+    
+    // Documentación de pedidos específicos (DESPUÉS DE /pedidos/{pedido})
+    Route::get('/pedidos/{pedido}/documentacion', [PedidoController::class, 'documentacionShow'])
+        ->name('pedidos.documentacion.show');
+    Route::get('/pedidos/{pedido}/documentacion/descargar/{tipo}', [PedidoController::class, 'descargarDocumento'])
+        ->name('pedidos.documentacion.descargar');
 
     Route::get('/ajax/almacen/{almacen}/usuarios', [PedidoController::class, 'getUsuariosPorAlmacen']);
     Route::get('/ajax/proveedor/{proveedor}/productos', [PedidoController::class, 'getProductosPorProveedor']);

@@ -11,7 +11,9 @@ use App\Services\TrazabilidadIntegrationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PedidoController extends Controller
 {
@@ -512,6 +514,282 @@ class PedidoController extends Controller
             ]);
             
             return back()->with('error', 'Error al enviar pedido a Trazabilidad: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mostrar seguimiento en tiempo real de pedidos del almacén
+     */
+    public function seguimiento()
+    {
+        $user = Auth::user();
+        
+        // Obtener TODOS los pedidos del propietario/administrador (sin filtrar por estado)
+        // Luego filtraremos solo los que tienen envíos asociados
+        if ($user->hasRole('propietario')) {
+            $admins = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+            
+            $pedidos = Pedido::where(function($query) use ($admins, $user) {
+                    $query->whereIn('administrador_id', $admins)
+                          ->orWhere('administrador_id', $user->id);
+                })
+                ->whereNotIn('estado', [
+                    Pedido::CANCELADO,
+                    Pedido::ANULADO,
+                    Pedido::RECHAZADO_TRAZABILIDAD
+                ]) // Excluir solo estados definitivamente cancelados/anulados
+                ->with(['almacen'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $pedidos = Pedido::where('administrador_id', $user->id)
+                ->whereNotIn('estado', [
+                    Pedido::CANCELADO,
+                    Pedido::ANULADO,
+                    Pedido::RECHAZADO_TRAZABILIDAD
+                ]) // Excluir solo estados definitivamente cancelados/anulados
+                ->with(['almacen'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+        
+        // Extraer envio_id de cada pedido desde observaciones o pedido_entregas
+        $pedidosConEnvio = $pedidos->map(function($pedido) {
+            $envioId = null;
+            $envioCodigo = null;
+            
+            // Intentar obtener desde pedido_entregas primero
+            $entrega = DB::table('pedido_entregas')
+                ->where('pedido_id', $pedido->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            if ($entrega) {
+                $envioId = $entrega->envio_id;
+                $envioCodigo = $entrega->envio_codigo;
+            } else {
+                // Intentar extraer de observaciones (múltiples patrones posibles)
+                $observaciones = $pedido->observaciones ?? '';
+                
+                // Patrón 1: "Envío ID (plantaCruds): 123"
+                if (preg_match('/Envío ID\s*\(?plantaCruds\)?:\s*(\d+)/i', $observaciones, $matches)) {
+                    $envioId = (int)$matches[1];
+                }
+                
+                // Patrón 2: "envio_id: 123" o "envio: 123"
+                if (!$envioId && preg_match('/envio[_\s]*id[:\s]+(\d+)/i', $observaciones, $matches)) {
+                    $envioId = (int)$matches[1];
+                }
+                
+                // Código de envío
+                if (preg_match('/Código Envío:\s*([A-Z0-9-]+)/i', $observaciones, $matches)) {
+                    $envioCodigo = $matches[1];
+                } else if (preg_match('/envio[_\s]*codigo[:\s]+([A-Z0-9-]+)/i', $observaciones, $matches)) {
+                    $envioCodigo = $matches[1];
+                }
+            }
+            
+            return [
+                'pedido_id' => $pedido->id,
+                'pedido_codigo' => $pedido->codigo_comprobante,
+                'almacen_nombre' => $pedido->almacen->nombre ?? 'N/A',
+                'envio_id' => $envioId,
+                'envio_codigo' => $envioCodigo,
+                'estado' => $pedido->estado,
+            ];
+        })->filter(function($item) {
+            // Solo pedidos que tienen envío asociado
+            return $item['envio_id'] !== null;
+        });
+        
+        // Log para depuración (temporal)
+        \Log::info('Pedidos con envío encontrados', [
+            'total_pedidos' => $pedidos->count(),
+            'pedidos_con_envio' => $pedidosConEnvio->count(),
+            'pedidos_ids' => $pedidosConEnvio->pluck('pedido_id')->toArray(),
+            'envios_ids' => $pedidosConEnvio->pluck('envio_id')->toArray(),
+        ]);
+        
+        // Extraer los envio_ids para pasarlos a la vista (para el JavaScript)
+        $pedidoEnvioIds = $pedidosConEnvio->pluck('envio_id')->filter()->unique()->values()->toArray();
+        
+        // URL de la API de plantaCruds
+        $plantaCrudsApiUrl = env('PLANTA_CRUDS_API_URL', 'http://localhost:8001');
+        
+        return view('pedidos.seguimiento', compact('pedidosConEnvio', 'plantaCrudsApiUrl', 'pedidoEnvioIds'));
+    }
+
+    /**
+     * Listar pedidos con documentación entregada
+     */
+    public function documentacion()
+    {
+        $user = Auth::user();
+        
+        // Obtener pedidos del propietario/administrador que tienen documentación
+        if ($user->hasRole('propietario')) {
+            $admins = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+            
+            $pedidosConDocumentos = DB::table('pedido_entregas')
+                ->join('pedidos', 'pedido_entregas.pedido_id', '=', 'pedidos.id')
+                ->where(function($query) use ($admins, $user) {
+                    $query->whereIn('pedidos.administrador_id', $admins)
+                          ->orWhere('pedidos.administrador_id', $user->id);
+                })
+                ->select(
+                    'pedidos.id',
+                    'pedidos.codigo_comprobante',
+                    'pedidos.fecha',
+                    'pedidos.estado',
+                    'pedido_entregas.envio_id',
+                    'pedido_entregas.envio_codigo',
+                    'pedido_entregas.fecha_entrega',
+                    'pedido_entregas.transportista_nombre',
+                    'pedido_entregas.documentos',
+                    'pedido_entregas.created_at'
+                )
+                ->orderBy('pedido_entregas.created_at', 'desc')
+                ->get()
+                ->map(function ($pedido) {
+                    // Decodificar documentos JSON
+                    $pedido->documentos = json_decode($pedido->documentos, true) ?? [];
+                    return $pedido;
+                });
+        } else {
+            $pedidosConDocumentos = DB::table('pedido_entregas')
+                ->join('pedidos', 'pedido_entregas.pedido_id', '=', 'pedidos.id')
+                ->where('pedidos.administrador_id', $user->id)
+                ->select(
+                    'pedidos.id',
+                    'pedidos.codigo_comprobante',
+                    'pedidos.fecha',
+                    'pedidos.estado',
+                    'pedido_entregas.envio_id',
+                    'pedido_entregas.envio_codigo',
+                    'pedido_entregas.fecha_entrega',
+                    'pedido_entregas.transportista_nombre',
+                    'pedido_entregas.documentos',
+                    'pedido_entregas.created_at'
+                )
+                ->orderBy('pedido_entregas.created_at', 'desc')
+                ->get()
+                ->map(function ($pedido) {
+                    $pedido->documentos = json_decode($pedido->documentos, true) ?? [];
+                    return $pedido;
+                });
+        }
+        
+        return view('pedidos.documentacion.index', compact('pedidosConDocumentos'));
+    }
+
+    /**
+     * Mostrar documentos de un pedido específico
+     */
+    public function documentacionShow(Pedido $pedido)
+    {
+        $user = Auth::user();
+        
+        // Verificar que el usuario tenga acceso a este pedido
+        if ($user->hasRole('propietario')) {
+            $admins = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+            
+            if (!in_array($pedido->administrador_id, $admins->toArray()) && $pedido->administrador_id != $user->id) {
+                abort(403, 'No tienes acceso a este pedido');
+            }
+        } else {
+            if ($pedido->administrador_id != $user->id) {
+                abort(403, 'No tienes acceso a este pedido');
+            }
+        }
+        
+        // Obtener todas las documentaciones de este pedido
+        $documentaciones = DB::table('pedido_entregas')
+            ->where('pedido_id', $pedido->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($doc) {
+                $doc->documentos = json_decode($doc->documentos, true) ?? [];
+                return $doc;
+            });
+        
+        return view('pedidos.documentacion.show', compact('pedido', 'documentaciones'));
+    }
+
+    /**
+     * Descargar un documento específico
+     */
+    public function descargarDocumento(Pedido $pedido, $tipo)
+    {
+        $user = Auth::user();
+        
+        // Verificar acceso
+        if ($user->hasRole('propietario')) {
+            $admins = User::role('administrador')
+                ->where('user_id', $user->id)
+                ->pluck('id');
+            
+            if (!in_array($pedido->administrador_id, $admins->toArray()) && $pedido->administrador_id != $user->id) {
+                abort(403);
+            }
+        } else {
+            if ($pedido->administrador_id != $user->id) {
+                abort(403);
+            }
+        }
+        
+        try {
+            // Validar tipo de documento
+            $tiposValidos = ['propuesta_vehiculos_path', 'nota_entrega_path', 'trazabilidad_completa_path'];
+            if (!in_array($tipo, $tiposValidos)) {
+                abort(400, 'Tipo de documento inválido');
+            }
+            
+            // Obtener la documentación más reciente del pedido
+            $documentacion = DB::table('pedido_entregas')
+                ->where('pedido_id', $pedido->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            if (!$documentacion) {
+                abort(404, 'Documentación no encontrada');
+            }
+            
+            // Obtener la ruta del documento desde el JSON
+            $documentos = json_decode($documentacion->documentos, true) ?? [];
+            
+            // Mapear tipos de documento
+            $tipoMap = [
+                'propuesta_vehiculos_path' => 'propuesta_vehiculos',
+                'nota_entrega_path' => 'nota_entrega',
+                'trazabilidad_completa_path' => 'trazabilidad_completa',
+            ];
+            
+            $tipoDocumento = $tipoMap[$tipo] ?? $tipo;
+            $rutaArchivo = $documentos[$tipoDocumento] ?? null;
+            
+            if (!$rutaArchivo || !Storage::exists($rutaArchivo)) {
+                abort(404, 'Archivo no encontrado');
+            }
+            
+            $contenido = Storage::get($rutaArchivo);
+            $nombreArchivo = basename($rutaArchivo);
+            
+            return response($contenido, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="' . $nombreArchivo . '"');
+        } catch (\Exception $e) {
+            Log::error('Error descargando documento', [
+                'pedido_id' => $pedido->id,
+                'tipo' => $tipo,
+                'error' => $e->getMessage()
+            ]);
+            abort(500, 'Error al descargar documento');
         }
     }
 }

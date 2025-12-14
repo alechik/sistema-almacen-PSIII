@@ -97,6 +97,18 @@
                         <p>Consultar pedidos</p>
                       </a>
                     </li>
+                    <li class="nav-item">
+                      <a href="{{route('pedidos.seguimiento')}}" class="nav-link {{ request()->routeIs('pedidos.seguimiento') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-geo-alt-fill"></i>
+                        <p>Seguimiento de mi pedido</p>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="{{route('pedidos.documentacion')}}" class="nav-link {{ request()->routeIs('pedidos.documentacion') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-file-earmark-pdf-fill"></i>
+                        <p>Documentación</p>
+                      </a>
+                    </li>
                     @if (auth()->user()->hasAnyRole(['administrador']))
                       <li class="nav-item">
                         <a href="{{route('ingresos.create')}}" class="nav-link {{ request()->routeIs('ingresos.create') ? 'active' : '' }}">
