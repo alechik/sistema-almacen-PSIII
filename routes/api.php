@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PedidoStatusController;
 use App\Http\Controllers\Api\PedidoAsignacionController;
+use App\Http\Controllers\Api\PedidoDocumentosController;
 use App\Http\Controllers\PedidoController;
 
 /*
@@ -24,6 +25,10 @@ Route::post('/pedidos/{pedido}/actualizar-estado', [PedidoStatusController::clas
 // Webhook desde plantaCruds para notificar asignación de envío (sin autenticación)
 Route::post('/pedidos/{pedido}/asignacion-envio', [PedidoAsignacionController::class, 'asignacionEnvio'])
     ->name('api.pedidos.asignacion-envio');
+
+// Webhook desde plantaCruds para recibir documentos de entrega (sin autenticación)
+Route::post('/pedidos/{pedido}/documentos-entrega', [PedidoDocumentosController::class, 'recibirDocumentos'])
+    ->name('api.pedidos.documentos-entrega');
 
 // API para obtener información de un almacén por ID (sin autenticación, para integración con Trazabilidad)
 Route::get('/almacenes/{id}', function ($id) {
