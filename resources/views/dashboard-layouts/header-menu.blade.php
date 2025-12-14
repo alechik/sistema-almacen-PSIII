@@ -22,95 +22,7 @@
         </a>
     </li>
     <!--end::Navbar Search-->
-    <!--begin::Messages Dropdown Menu-->
-    <li class="nav-item dropdown">
-        <a class="nav-link" data-bs-toggle="dropdown" href="#">
-        <i class="bi bi-chat-text"></i>
-        <span class="navbar-badge badge text-bg-danger">3</span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-        <a href="#" class="dropdown-item">
-            <!--begin::Message-->
-            <div class="d-flex">
-            <div class="flex-shrink-0">
-                <img
-                src="{{asset('assets/img/user1-128x128.jpg')}}"
-                alt="User Avatar"
-                class="img-size-50 rounded-circle me-3"
-                />
-            </div>
-            <div class="flex-grow-1">
-                <h3 class="dropdown-item-title">
-                Brad Diesel
-                <span class="float-end fs-7 text-danger"
-                    ><i class="bi bi-star-fill"></i
-                ></span>
-                </h3>
-                <p class="fs-7">Call me whenever you can...</p>
-                <p class="fs-7 text-secondary">
-                <i class="bi bi-clock-fill me-1"></i> 4 Hours Ago
-                </p>
-            </div>
-            </div>
-            <!--end::Message-->
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item">
-            <!--begin::Message-->
-            <div class="d-flex">
-            <div class="flex-shrink-0">
-                <img
-                src="{{asset('assets/img/user8-128x128.jpg')}}"
-                alt="User Avatar"
-                class="img-size-50 rounded-circle me-3"
-                />
-            </div>
-            <div class="flex-grow-1">
-                <h3 class="dropdown-item-title">
-                John Pierce
-                <span class="float-end fs-7 text-secondary">
-                    <i class="bi bi-star-fill"></i>
-                </span>
-                </h3>
-                <p class="fs-7">I got your message bro</p>
-                <p class="fs-7 text-secondary">
-                <i class="bi bi-clock-fill me-1"></i> 4 Hours Ago
-                </p>
-            </div>
-            </div>
-            <!--end::Message-->
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item">
-            <!--begin::Message-->
-            <div class="d-flex">
-            <div class="flex-shrink-0">
-                <img
-                src="{{asset('assets/img/user3-128x128.jpg')}}"
-                alt="User Avatar"
-                class="img-size-50 rounded-circle me-3"
-                />
-            </div>
-            <div class="flex-grow-1">
-                <h3 class="dropdown-item-title">
-                Nora Silvester
-                <span class="float-end fs-7 text-warning">
-                    <i class="bi bi-star-fill"></i>
-                </span>
-                </h3>
-                <p class="fs-7">The subject goes here</p>
-                <p class="fs-7 text-secondary">
-                <i class="bi bi-clock-fill me-1"></i> 4 Hours Ago
-                </p>
-            </div>
-            </div>
-            <!--end::Message-->
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>
-        </div>
-    </li>
-    <!--end::Messages Dropdown Menu-->
+
     <!--begin::Notifications Dropdown Menu-->
     @if (auth()->user()->hasAnyRole(['admin']))
         <li class="nav-item dropdown">
@@ -168,38 +80,70 @@
         </li>
     @endif
     @role('propietario')
-    <li class="nav-item dropdown">
-        <a class="nav-link" data-bs-toggle="dropdown" href="#">
-            <i class="bi bi-bell-fill"></i>
-            @if($cantidadPedidosPendientes > 0)
-                <span class="badge bg-warning navbar-badge">
-                    {{ $cantidadPedidosPendientes }}
-                </span>
-            @endif
-        </a>
-
-        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-            <span class="dropdown-header">
-                {{ $cantidadPedidosPendientes }} pedidos pendientes
-            </span>
-
-            @foreach($pedidosPendientes as $pedido)
-                <a href="{{ route('pedidos.show', $pedido->id) }}" class="dropdown-item">
-                    <i class="fas fa-box me-2"></i> Pedido #{{ $pedido->id }}
-                    <span class="float-end text-muted text-sm">{{ $pedido->created_at->diffForHumans() }}</span>
-                </a>
-            @endforeach
-
-            <div class="dropdown-divider"></div>
-            <a href="{{ route('pedidos.index') }}" class="dropdown-item dropdown-footer">
-                Ver todos los pedidos
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-bs-toggle="dropdown" href="#">
+                <i class="bi bi-bell-fill"></i>
+                @if($cantidadPedidosPendientes > 0)
+                    <span class="badge bg-warning navbar-badge">
+                        {{ $cantidadPedidosPendientes }}
+                    </span>
+                @endif
             </a>
-        </div>
-    </li>
+
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                <span class="dropdown-header">
+                    {{ $cantidadPedidosPendientes }} pedidos pendientes
+                </span>
+
+                @foreach($pedidosPendientes as $pedido)
+                    <a href="{{ route('pedidos.show', $pedido->id) }}" class="dropdown-item">
+                        <i class="fas fa-box me-2"></i> Pedido #{{ $pedido->id }}
+                        <span class="float-end text-muted text-sm">{{ $pedido->created_at->diffForHumans() }}</span>
+                    </a>
+                @endforeach
+
+                <div class="dropdown-divider"></div>
+                <a href="{{ route('pedidos.index') }}" class="dropdown-item dropdown-footer">
+                    Ver todos los pedidos
+                </a>
+            </div>
+        </li>
     @endrole
+    @if(auth()->user()->hasRole('administrador'))
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-bs-toggle="dropdown" href="#">
+                <i class="bi bi-bell"></i>
+                @if($cantidadStockMinimo > 0)
+                    <span class="navbar-badge badge text-bg-warning">
+                        {{ $cantidadStockMinimo }}
+                    </span>
+                @endif
+            </a>
 
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                <span class="dropdown-header">
+                    Productos con stock mínimo
+                </span>
 
+                @forelse($productosStockMinimo as $producto)
+                    <a href="{{ route('stock-minimo.index') }}" class="dropdown-item">
+                        <i class="bi bi-box-seam me-2"></i>
+                        {{ $producto->nombre }}
+                        <span class="float-end text-muted fs-7">
+                            {{ $producto->almacenes->first()->pivot->stock }}
+                        </span>
+                    </a>
+                @empty
+                    <span class="dropdown-item text-muted">
+                        No hay alertas
+                    </span>
+                @endforelse
+            </div>
+        </li>
+    @endif
     <!--end::Notifications Dropdown Menu-->
+
+    
     <!--begin::Fullscreen Toggle-->
     <li class="nav-item">
         <a class="nav-link" href="#" data-lte-toggle="fullscreen">

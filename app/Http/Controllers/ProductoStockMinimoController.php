@@ -9,12 +9,19 @@ class ProductoStockMinimoController extends Controller
 {
     public function index()
     {
-        $productos = Producto::with('categoria')
-            ->whereColumn('stock', '<=', 'stock_minimo')
-            ->where('en_pedido', 0)
-            ->where('estado', 1)
-            ->orderBy('stock')
-            ->paginate(10);
+        // $productos = Producto::with('categoria')
+        //     ->whereColumn('stock', '<=', 'stock_minimo')
+        //     ->where('en_pedido', 0)
+        //     ->where('estado', 1)
+        //     ->orderBy('stock')
+        //     ->paginate(10);
+
+        // return view('productos.stock-minimo', compact('productos'));
+        $user = auth()->user();
+
+        $productos = Producto::stockMinimoParaAdministrador($user->id)
+            ->with('almacenes')
+            ->paginate(15);
 
         return view('productos.stock-minimo', compact('productos'));
     }

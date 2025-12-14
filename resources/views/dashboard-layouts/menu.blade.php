@@ -26,8 +26,8 @@
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" aria-label="Main navigation" data-accordion="false"
           id="navigation" >
           @if (auth()->user()->hasAnyRole(['administrador', 'propietario']))
-            <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*','unidad-medidas.*','ingresos.*','salidas.*') ? 'menu-open' : '' }}">
-              <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*','unidad-medidas.*','ingresos.*','salidas.*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*' ,'pedidos.*','unidad-medidas.*','ingresos.*','salidas.*','almacen-productos.*') ? 'menu-open' : '' }}">
+              <a href="#" class="nav-link {{ request()->routeIs('almacenes.*','tiposalidas.*','tipoingresos.*','categorias.*','vehiculos.*','productos.*','pedidos.*','unidad-medidas.*','ingresos.*','salidas.*','almacen-productos.*') ? 'active' : '' }}">
                 <i class="nav-icon bi bi-box-seam-fill"></i>
                 <p>
                   ADM. DE ALMACENES
@@ -236,6 +236,13 @@
                       <a href="{{route('reportes.ingresos')}}" class="nav-link {{ request()->routeIs('reportes.ingresos') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-file-arrow-down"></i>
                         <p>Reporte de ingresos</p>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="{{ route('reportes.salidas.productos.almacen') }}"
+                        class="nav-link {{ request()->routeIs('reportes.salidas.productos.almacen*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-boxes"></i>
+                        <p>Salidas por producto y almacén</p>
                       </a>
                     </li>
                   </ul>

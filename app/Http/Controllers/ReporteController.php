@@ -41,6 +41,27 @@ class ReporteController extends Controller
         return view('reportes.ingresos', compact('ingresos'));
     }
 
+    public function salidasProductosPorAlmacen()
+    {
+        $data = Salida::join('detalle_salidas as ds', 'ds.salida_id', '=', 'salidas.id')
+            ->join('productos as p', 'p.id', '=', 'ds.producto_id')
+            ->join('almacens as a', 'a.id', '=', 'salidas.almacen_id')
+            ->selectRaw('
+            a.nombre as almacen,
+            p.nombre as producto,
+            SUM(ds.cant_salida) as cantidad_total,
+            SUM(ds.cant_salida * ds.precio) as costo_total
+        ')
+            ->groupBy('a.nombre', 'p.nombre')
+            ->orderBy('a.nombre')
+            ->orderBy('p.nombre')
+            ->get();
+
+        return view('reportes.salidas-productos-almacen', compact('data'));
+    }
+
+
+
     public function salidasPdf()
     {
         $salidas = Salida::with([
@@ -165,5 +186,32 @@ class ReporteController extends Controller
         );
 
         return $pdf->stream("Reporte_Ingresos.pdf");
+    }
+    public function salidasProductosPorAlmacenPdf()
+    {
+        $data = Salida::join('detalle_salidas as ds', 'ds.salida_id', '=', 'salidas.id')
+            ->join('productos as p', 'p.id', '=', 'ds.producto_id')
+            ->join('almacens as a', 'a.id', '=', 'salidas.almacen_id')
+            ->selectRaw('
+            a.nombre as almacen,
+            p.nombre as producto,
+            SUM(ds.cant_salida) as cantidad_total,
+            SUM(ds.cant_salida * ds.precio) as costo_total
+        ')
+            ->groupBy('a.nombre', 'p.nombre')
+            ->orderBy('a.nombre')
+            ->orderBy('p.nombre')
+            ->get();
+
+        $empresa = Auth::user()->hasRole('propietario')
+            ? Auth::user()
+            : Auth::user()->parent;
+
+        $pdf = Pdf::loadView('reportes.salidas-productos-almacen-pdf', [
+            'data' => $data,
+            'empresa' => $empresa
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Reporte_Salidas_Productos_Almacen.pdf');
     }
 }

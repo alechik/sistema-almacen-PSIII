@@ -101,8 +101,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
 
     Route::get('/productos/generar-codigo/{categoria}', [ProductoController::class, 'generarCodigo']);
-    Route::get('/productos/stock/minimo', [ProductoStockMinimoController::class, 'index'])
-        ->name('productos.stock.minimo');
+
+    // Route::get('/productos/stock/minimo', [ProductoStockMinimoController::class, 'index'])
+    //     ->name('productos.stock.minimo');
+    Route::get('/stock-minimo', [ProductoStockMinimoController::class, 'index'])
+        ->name('stock-minimo.index');
 });
 
 Route::middleware('auth')->group(function () {
@@ -165,7 +168,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('pedidos.confirmar');
     Route::put('/pedidos/{pedido}/anular', [PedidoController::class, 'anular'])
         ->name('pedidos.anular');
-
+    // GENERACION DE PEDIDOS POR ALMACEN Y PROVEEDOR
+    Route::get(
+        '/pedidos/stock-minimo/{almacen}/{proveedor}',
+        [PedidoController::class, 'createFromStockMinimo']
+    )->name('pedidos.stock-minimo.create');
+    // AJAX
     Route::get('/ajax/almacen/{almacen}/usuarios', [PedidoController::class, 'getUsuariosPorAlmacen']);
     Route::get('/ajax/proveedor/{proveedor}/productos', [PedidoController::class, 'getProductosPorProveedor']);
 
@@ -230,9 +238,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ReporteController::class, 'index'])->name('reportes.index');
         Route::get('/salidas', [ReporteController::class, 'salidas'])->name('reportes.salidas');
         Route::get('/ingresos', [ReporteController::class, 'ingresos'])->name('reportes.ingresos');
+        Route::get('/salidas-productos-almacen', [ReporteController::class, 'salidasProductosPorAlmacen'])->name('reportes.salidas.productos.almacen');
 
         // PDF
         Route::get('/salidas/pdf', [ReporteController::class, 'salidasPdf'])->name('reportes.salidas.pdf');
         Route::get('/ingresos/pdf', [ReporteController::class, 'ingresosPdf'])->name('reportes.ingresos.pdf');
+        Route::get('/salidas-productos-almacen/pdf', [ReporteController::class, 'salidasProductosPorAlmacenPdf'])->name('reportes.salidas.productos.almacen.pdf');
     });
 });

@@ -96,7 +96,7 @@ class PedidoController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'codigo_comprobante' => 'required|string',
+            // 'codigo_comprobante' => 'required|string',
             'fecha' => 'required|date',
             'fecha_min' => 'required|date',
             'fecha_max' => 'required|date|after_or_equal:fecha_min',
@@ -136,9 +136,15 @@ class PedidoController extends Controller
                 'producto_id' => $item['producto_id'],
                 'cantidad' => $item['cantidad'],
             ]);
+            // 🔒 Marcar producto como "en pedido"
+            $pedido->almacen->productos()
+                ->updateExistingPivot(
+                    $item['producto_id'],
+                    ['en_pedido' => 1]
+                );
         }
 
-        return redirect()->route('pedidos.create')
+        return redirect()->route('pedidos.index')
             ->with('success', 'Pedido creado exitosamente');
     }
 
@@ -239,6 +245,58 @@ class PedidoController extends Controller
         return redirect()->route('pedidos.index')
             ->with('success', 'Pedido actualizado correctamente.');
     }
+
+
+    public function createFromStockMinimo(Almacen $almacen, $proveedorId)
+    {
+        // dd($almacen);
+        $admin = Auth::user();
+
+        if (!$admin->hasRole('administrador')) {
+            abort(403);
+        }
+
+        // 🔹 Productos con stock mínimo del MISMO almacén y proveedor
+        $productos = Producto::where('proveedor_id', $proveedorId)
+            ->whereHas('almacenes', function ($q) use ($almacen) {
+                $q->where('almacen_id', $almacen->id)
+                    ->whereColumn('stock', '<=', 'stock_minimo')
+                    ->where('en_pedido', 0);
+            })
+            ->with(['almacenes' => function ($q) use ($almacen) {
+                $q->where('almacen_id', $almacen->id);
+            }])
+            ->get();
+
+        if ($productos->isEmpty()) {
+            return back()->with('error', 'No hay productos con stock mínimo para este proveedor.');
+        }
+
+        // Operadores y transportistas del almacén
+        $operadores = User::role('operador')
+            ->whereHas('almacenes', fn($q) => $q->where('almacen_id', $almacen->id))
+            ->get();
+
+        $transportistas = User::role('transportista')
+            ->whereHas('almacenes', fn($q) => $q->where('almacen_id', $almacen->id))
+            ->get();
+        // dd($operadores);
+        $lastId = Pedido::max('id') ?? 0;
+
+        return view('pedidos.create-stock-minimo', [
+            'almacen'        => $almacen,
+            'proveedorId'    => $proveedorId,
+            'productos'      => $productos,
+            'operadores'     => $operadores,
+            'transportistas' => $transportistas,
+            'lastId'         => $lastId,
+            'proveedores'    => $this->proveedores,
+        ]);
+    }
+
+
+
+
 
     public function confirmar(Pedido $pedido)
     {

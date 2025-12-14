@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\View;
 
 use App\Models\Pedido;
+use App\Models\Producto;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,7 +13,7 @@ class NotificationComposer
     {
         $user = Auth::user();
 
-        // 📌 CAMPANA 1: Solo para ADMIN
+        // CAMPANA 1: Solo para ADMIN
         // Solo para administrador
         if ($user && $user->hasRole('admin')) {
 
@@ -28,8 +29,8 @@ class NotificationComposer
                 'cantidadPendientes' => $cantidadPendientes,
             ]);
         }
-        // 📌 CAMPANA 2: Solo para PROPIETARIO (notificaciones clásicas)
-        // 📌 CAMPANA PARA PROPIETARIO BASADA EN "pedidos"
+        // CAMPANA 2: Solo para PROPIETARIO (notificaciones clásicas)
+        // CAMPANA PARA PROPIETARIO BASADA EN "pedidos"
         if ($user && $user->hasRole('propietario')) {
 
             $cantidadPedidosPendientes = Pedido::where('estado', 1)
@@ -43,6 +44,25 @@ class NotificationComposer
             $view->with([
                 'cantidadPedidosPendientes' => $cantidadPedidosPendientes,
                 'pedidosPendientes' => $pedidosPendientes,
+            ]);
+        }
+        /* ======================
+         * CAMPANA ADMINISTRADOR
+         * ====================== */
+        if ($user && $user->hasRole('administrador')) {
+
+            $productosStockMinimo = Producto::stockMinimoParaAdministrador($user->id)
+                ->with('almacenes')
+                ->latest()
+                ->take(10)
+                ->get();
+
+            $cantidadStockMinimo = Producto::stockMinimoParaAdministrador($user->id)
+                ->count();
+
+            $view->with([
+                'productosStockMinimo' => $productosStockMinimo,
+                'cantidadStockMinimo'  => $cantidadStockMinimo,
             ]);
         }
     }

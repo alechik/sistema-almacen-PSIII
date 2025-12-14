@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -66,5 +67,24 @@ class Producto extends Model
     public function almacenProductos()
     {
         return $this->hasMany(AlmacenProducto::class, 'producto_id', 'id');
+    }
+
+    public function almacenes()
+    {
+        return $this->belongsToMany(Almacen::class, 'almacen_productos')
+            ->withPivot(['stock', 'stock_minimo', 'en_pedido']);
+    }
+
+    public function scopeStockMinimoParaAdministrador(Builder $query, $userId)
+    {
+        return $query->whereHas('almacenes', function ($q) use ($userId) {
+            $q->whereColumn('almacen_productos.stock', '<=', 'almacen_productos.stock_minimo')
+                ->where('almacen_productos.en_pedido', 0)
+                ->whereIn('almacen_productos.almacen_id', function ($sub) use ($userId) {
+                    $sub->select('almacen_id')
+                        ->from('almacen_users')
+                        ->where('user_id', $userId);
+                });
+        });
     }
 }
