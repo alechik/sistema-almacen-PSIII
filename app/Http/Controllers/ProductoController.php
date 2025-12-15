@@ -6,14 +6,16 @@ use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\UnidadMedida;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class ProductoController extends Controller
 {
     private $proveedores = [
-        ['id' => 1, 'nombre' => 'Proveedor 1'],
-        ['id' => 2, 'nombre' => 'Proveedor 2'],
-        ['id' => 3, 'nombre' => 'Proveedor 3'],
+        ['id' => 1, 'nombre' => 'Proveedor Planta'],
+        // ['id' => 2, 'nombre' => 'Proveedor 2'],
+        // ['id' => 3, 'nombre' => 'Proveedor 3'],
     ];
     /**
      * Display a listing of the resource.
@@ -194,4 +196,79 @@ class ProductoController extends Controller
 
         return response()->json(['codigo' => $codigo]);
     }
+
+public function syncFromPlanta()
+{
+    DB::beginTransaction();
+
+    try {
+
+        // 1️⃣ Primera llamada para saber cuántas páginas hay
+        $response = Http::acceptJson()
+            ->get('http://localhost:8001/api/products?page=1');
+
+        if (!$response->successful()) {
+            return back()->with('error', 'No se pudo conectar con la API de planta.');
+        }
+
+        $lastPage = $response->json('last_page');
+
+        // 2️⃣ Recorremos TODAS las páginas
+        for ($page = 1; $page <= $lastPage; $page++) {
+
+            $response = Http::acceptJson()
+                ->get("http://localhost:8001/api/products?page={$page}");
+
+            $productosApi = $response->json('data');
+
+            foreach ($productosApi as $item) {
+
+                /**
+                 * UNIDAD DE MEDIDA
+                 */
+                $unidad = UnidadMedida::updateOrCreate(
+                    ['cod_unidad_medida' => $item['unit']['codigo']],
+                    ['descripcion' => $item['unit']['nombre']]
+                );
+
+                /**
+                 * CATEGORÍA
+                 */
+                $categoria = Categoria::updateOrCreate(
+                    ['nombre' => 'PLANTA'],
+                    ['descripcion' => 'Productos provenientes de planta']
+                );
+
+                /**
+                 * PRODUCTO (CLAVE CORRECTA)
+                 */
+                Producto::updateOrCreate(
+                    ['id'=> $item['producto_id']], // ✅ CLAVE ÚNICA REAL
+                    [
+                        'cod_producto' => $item['codigo'],
+                        'nombre'           => $item['nombre'],
+                        'descripcion'      => $item['descripcion'],
+                        'precio'           => $item['precio_unitario'],
+                        'estado'           => $item['activo'] ? 1 : 0,
+                        'categoria_id'     => $categoria->id,
+                        'proveedor_id'     => 1,
+                        'unidad_medida_id' => $unidad->id,
+                    ]
+                );
+            }
+        }
+
+        DB::commit();
+
+        return redirect()
+            ->route('productos.index')
+            ->with('success', 'Todos los productos fueron sincronizados correctamente.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return back()->with('error', 'Error al sincronizar: ' . $e->getMessage());
+    }
+}
+
 }

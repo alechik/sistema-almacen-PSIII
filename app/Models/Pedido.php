@@ -9,10 +9,10 @@ class Pedido extends Model
     const CANCELADO = 0; //el proveedor puede cancelar el pedido
     const EMITIDO = 1; //administrador de almacen
     const CONFIRMADO = 2; //el propietario
-    const RECEPCIONADO = 3; //el proveedor lo marca como terminado
+    const TERMINADO = 3; //hacemos envio del pedido al proveedor
     const ANULADO = 4; //el propietario puede anular el pedido
-    const EN_TRANSITO = 5; // LOGISTICA
-    const COMPLETADO = 6; // LOGISTICA
+    const EN_TRANSITO = 5; // cuando el sistema de logistica recibe el pedido
+    const COMPLETADO = 6; // cuando el pedido ha sido entregado completamente
     protected $fillable = [
         'codigo_comprobante',
         'fecha',

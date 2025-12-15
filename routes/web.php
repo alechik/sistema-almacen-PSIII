@@ -106,6 +106,9 @@ Route::middleware('auth')->group(function () {
     //     ->name('productos.stock.minimo');
     Route::get('/stock-minimo', [ProductoStockMinimoController::class, 'index'])
         ->name('stock-minimo.index');
+
+    // PARA INTEGRACION
+    Route::post('/productos/sync-planta', [ProductoController::class, 'syncFromPlanta'])->name('productos.sync.planta');
 });
 
 Route::middleware('auth')->group(function () {
@@ -230,8 +233,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/almacen-productos/{almacenProducto}', [AlmacenProductoController::class, 'update'])->name('almacen-productos.update');
     Route::delete('/almacen-productos/{almacenProducto}', [AlmacenProductoController::class, 'destroy'])->name('almacen-productos.destroy');
 });
-
-
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('reportes')->group(function () {

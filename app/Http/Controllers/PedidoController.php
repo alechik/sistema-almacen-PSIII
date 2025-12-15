@@ -10,13 +10,14 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class PedidoController extends Controller
 {
     private $proveedores = [
-        ['id' => 1, 'nombre' => 'Proveedor 1'],
-        ['id' => 2, 'nombre' => 'Proveedor 2'],
-        ['id' => 3, 'nombre' => 'Proveedor 3'],
+        ['id' => 1, 'nombre' => 'Proveedor Planta'],
+        // ['id' => 2, 'nombre' => 'Proveedor 2'],
+        // ['id' => 3, 'nombre' => 'Proveedor 3'],
     ];
     /**
      * Display a listing of the resource.
@@ -308,13 +309,72 @@ class PedidoController extends Controller
             'estado' => Pedido::CONFIRMADO
         ]);
 
-        return back()->with('success', 'Pedido confirmado correctamente.');
+        // Preparar productos para la API de Planta
+        $products = $pedido->detalles->map(function ($detalle, $index) {
+            return [
+                'producto_id' => $detalle->producto->id, // ID espejo de Planta
+                'cantidad' => $detalle->cantidad,
+                'observaciones' => $detalle->observaciones ?? null,
+                'order_product_index' => $index, // índice necesario para destinations
+            ];
+        })->toArray();
+
+        // Preparar destinations obligatorios
+        $destinations = [
+            [
+                'direccion' => $pedido->almacen->ubicacion ?? 'Dirección ejemplo',
+                'latitud' => $pedido->almacen->latitud ?? 0,
+                'longitud' => $pedido->almacen->longitud ?? 0,
+                'referencia' => 'Referencia ejemplo',
+                'nombre_contacto' => $pedido->operador->full_name ?? 'Operador ejemplo',
+                'telefono_contacto' => '77777777',
+                'instrucciones_entrega' => 'Entregar entre 9am y 5pm',
+                'products' => collect($products)->map(function ($prod) {
+                    return [
+                        'order_product_index' => $prod['order_product_index'],
+                        'cantidad' => $prod['cantidad'],
+                        'observaciones' => $prod['observaciones'] ?? null
+                    ];
+                })->toArray(),
+            ]
+        ];
+
+        // Datos principales del pedido
+        $data = [
+            'nombre' => $pedido->codigo_comprobante ?? 'Almacén Ejemplo',
+            'email' => $pedido->almacen->email ?? 'correo@ejemplo.com',
+            'products' => $products,
+            'destinations' => $destinations,
+            'fecha_entrega' => $pedido->fecha_max ?? now()->addDays(3)->format('Y-m-d'),
+            'descripcion' => 'Pedido generado desde sistema de almacén',
+            'observaciones' => 'Envío automático al confirmar',
+            'editable_hasta' => now()->addHours(24)->format('Y-m-d H:i:s'),
+            // Campos opcionales para cliente si no hay token
+            'nombre_usuario' => $pedido->operador->full_name ?? 'Operador ejemplo',
+            'apellido_usuario' => 'Apellido ejemplo',
+            'telefono_usuario' => '77777777',
+            'nit' => '00000000',
+            'direccion_cliente' => $pedido->almacen->ubicacion ?? 'Dirección ejemplo',
+        ];
+
+        try {
+            $apiUrl = 'http://localhost:8001/api/customer-orders';
+            $response = Http::post($apiUrl, $data);
+            // dd($response->json());
+            if ($response->failed()) {
+                return back()->with('error', 'Error al enviar pedido a Planta: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Excepción al enviar pedido: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Pedido confirmado y enviado a Planta correctamente.');
     }
 
     public function anular(Pedido $pedido)
     {
-        if ($pedido->estado == Pedido::TERMINADO) {
-            return back()->with('error', 'No se puede anular un pedido TERMINADO.');
+        if ($pedido->estado != Pedido::EMITIDO) {
+            return back()->with('error', 'No se puede anular un pedido distinto a EMITIDO.');
         }
 
         $pedido->update([

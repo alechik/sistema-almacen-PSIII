@@ -57,9 +57,19 @@
 
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Lista de Productos</h3>
-                    <a href="{{ route('productos.create') }}" class="btn btn-primary btn-sm ms-auto">
-                        <i class="fas fa-plus"></i> Nuevo Producto
-                    </a>
+                    <!-- Botones a la derecha -->
+                    <div class="ms-auto d-flex gap-2">
+                        <form action="{{ route('productos.sync.planta') }}" method="POST" class="m-0">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                🔄 Actualizar productos desde Planta
+                            </button>
+                        </form>
+
+                        <a href="{{ route('productos.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Nuevo Producto
+                        </a>
+                    </div>
                 </div>
 
                 <div class="card-body p-0">
