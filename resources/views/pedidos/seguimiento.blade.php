@@ -617,11 +617,23 @@ window.actualizarEnvios = async function() {
     
     try {
         console.log('🔄 Actualizando envíos...');
-        console.log('🔗 URL:', `${PLANTA_CRUDS_API_URL}/api/rutas/envios-activos`);
-        console.log('📋 Filtro de envíos:', PEDIDO_ENVIO_IDS);
+        console.log('📋 IDs de envíos a consultar:', PEDIDO_ENVIO_IDS);
         
-        // Obtener todos los envíos activos desde plantaCruds
-        const response = await fetch(`${PLANTA_CRUDS_API_URL}/api/rutas/envios-activos`);
+        if (!PEDIDO_ENVIO_IDS || PEDIDO_ENVIO_IDS.length === 0) {
+            console.warn('⚠️ No hay IDs de envíos para consultar');
+            renderizarListaEnvios([], [], []);
+            return;
+        }
+        
+        // Obtener TODOS los envíos (activos y entregados) desde plantaCruds usando el nuevo endpoint
+        const response = await fetch(`${PLANTA_CRUDS_API_URL}/api/rutas/envios-por-ids`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ ids: PEDIDO_ENVIO_IDS })
+        });
         
         if (!response.ok) {
             throw new Error(`Error en respuesta: ${response.status} ${response.statusText}`);
@@ -630,15 +642,17 @@ window.actualizarEnvios = async function() {
         const data = await response.json();
         console.log('📦 Envíos recibidos:', data);
         
-        // FILTRAR: Solo los envíos que pertenecen a nuestros pedidos
+        // Ya vienen filtrados por IDs, no necesitamos filtrar de nuevo
         const enviosFiltrados = {
-            en_transito: (data.en_transito || []).filter(e => PEDIDO_ENVIO_IDS.includes(e.id)),
-            esperando: (data.esperando || []).filter(e => PEDIDO_ENVIO_IDS.includes(e.id))
+            en_transito: data.en_transito || [],
+            esperando: data.esperando || [],
+            entregados: data.entregados || []
         };
         
         console.log('✅ Envíos filtrados:', enviosFiltrados);
+        console.log(`📊 Resumen: ${enviosFiltrados.en_transito.length} en tránsito, ${enviosFiltrados.esperando.length} esperando, ${enviosFiltrados.entregados.length} entregados`);
         
-        renderizarListaEnvios(enviosFiltrados.en_transito || [], enviosFiltrados.esperando || []);
+        renderizarListaEnvios(enviosFiltrados.en_transito || [], enviosFiltrados.esperando || [], enviosFiltrados.entregados || []);
         await actualizarMapaConEnvios(enviosFiltrados.en_transito || []);
         
         const ahora = new Date();
@@ -668,7 +682,7 @@ window.actualizarEnvios = async function() {
     }
 };
 
-function renderizarListaEnvios(enTransito, esperando) {
+function renderizarListaEnvios(enTransito, esperando, entregados = []) {
     const container = document.getElementById('lista-envios');
     let html = '';
     
@@ -723,6 +737,27 @@ function renderizarListaEnvios(enTransito, esperando) {
                     <p class="mb-1 mt-1"><strong>${envio.codigo}</strong></p>
                     <p class="mb-0 small text-muted">📦 ${envio.almacen_nombre || 'N/A'}</p>
                     <small class="text-muted"><i class="bi bi-info-circle"></i> Esperando inicio del transportista</small>
+                </div>
+            `;
+        });
+    }
+    
+    // Agregar sección de envíos entregados
+    html += `<h6 class="text-success mt-3"><i class="bi bi-check-circle-fill"></i> Entregados (${entregados.length})</h6>`;
+    
+    if (entregados.length === 0) {
+        html += `<div class="alert alert-secondary py-2"><i class="bi bi-info-circle"></i> No hay envíos entregados aún</div>`;
+    } else {
+        entregados.forEach(envio => {
+            const fechaEntrega = envio.fecha_entrega ? new Date(envio.fecha_entrega).toLocaleString('es-ES') : 'N/A';
+            html += `
+                <div class="envio-card mb-2 p-2 border rounded bg-light" style="opacity: 0.9;">
+                    <span class="badge bg-success mb-1">✅ ENTREGADO</span>
+                    <p class="mb-1 mt-1"><strong>${envio.codigo}</strong></p>
+                    <p class="mb-1 small text-muted">📦 ${envio.almacen_nombre || 'N/A'}</p>
+                    <p class="mb-1 small text-muted">📍 ${envio.direccion_completa || 'N/A'}</p>
+                    ${envio.transportista_nombre ? `<p class="mb-1 small text-muted">👤 ${envio.transportista_nombre}</p>` : ''}
+                    <small class="text-muted"><i class="bi bi-calendar-check"></i> Entregado: ${fechaEntrega}</small>
                 </div>
             `;
         });

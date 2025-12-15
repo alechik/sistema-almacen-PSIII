@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PedidoAsignacionController extends Controller
 {
@@ -22,7 +23,7 @@ class PedidoAsignacionController extends Controller
      */
     public function asignacionEnvio(Request $request, int $pedidoId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+            $validator = Validator::make($request->all(), [
             'envio_id' => 'required|integer',
             'envio_codigo' => 'required|string',
             'estado' => 'required|string|in:asignado,aceptado,en_proceso,en_transito,entregado,cancelado',
@@ -38,6 +39,8 @@ class PedidoAsignacionController extends Controller
             'fecha_asignacion' => 'nullable|date',
             'fecha_estimada_entrega' => 'nullable|date',
             'almacen_destino' => 'nullable|array',
+            'documentos' => 'nullable|array',
+            'documentos.propuesta_vehiculos' => 'nullable|string', // base64 PDF
         ]);
 
         if ($validator->fails()) {
@@ -84,21 +87,13 @@ class PedidoAsignacionController extends Controller
                         'transportista_nombre' => $request->transportista['nombre'] ?? 'N/A',
                     ]);
                     
-                    // Guardar información del transportista en observaciones si no existe en el sistema
-                    $infoTransportista = "Transportista asignado desde plantaCruds:\n";
-                    $infoTransportista .= "- ID (plantaCruds): {$transportistaId}\n";
-                    $infoTransportista .= "- Nombre: " . ($request->transportista['nombre'] ?? 'N/A') . "\n";
-                    $infoTransportista .= "- Email: " . ($request->transportista['email'] ?? 'N/A') . "\n";
-                    $infoTransportista .= "- Vehículo: " . ($request->vehiculo['placa'] ?? 'N/A') . "\n";
-                    $infoTransportista .= "- Fecha asignación: " . ($request->fecha_asignacion ?? now()->toDateString()) . "\n";
-                    
-                    // Agregar a observaciones existentes o crear nuevas
-                    $observaciones = $pedido->observaciones ?? '';
-                    if (!empty($observaciones)) {
-                        $pedido->observaciones = $observaciones . "\n\n" . $infoTransportista;
-                    } else {
-                        $pedido->observaciones = $infoTransportista;
-                    }
+                    // Nota: La tabla pedidos no tiene columna observaciones
+                    // La información del transportista se guarda en pedido_entregas
+                    Log::info('Transportista de plantaCruds no existe en sistema de almacenes', [
+                        'pedido_id' => $pedidoId,
+                        'transportista_id_planta' => $transportistaId,
+                        'transportista_nombre' => $request->transportista['nombre'] ?? 'N/A',
+                    ]);
                 }
             }
 
@@ -121,26 +116,76 @@ class PedidoAsignacionController extends Controller
                 ]);
             }
 
-            // Guardar información adicional del envío en observaciones
-            $infoEnvio = "\n--- Información de Envío ---\n";
-            $infoEnvio .= "Envío ID (plantaCruds): {$request->envio_id}\n";
-            $infoEnvio .= "Código Envío: {$request->envio_codigo}\n";
-            $infoEnvio .= "Estado: {$request->estado}\n";
-            if ($request->fecha_aceptacion) {
-                $infoEnvio .= "Fecha aceptación: {$request->fecha_aceptacion}\n";
-            }
-            if ($request->fecha_estimada_entrega) {
-                $infoEnvio .= "Fecha estimada entrega: {$request->fecha_estimada_entrega}\n";
-            }
-            
-            $observaciones = $pedido->observaciones ?? '';
-            if (!empty($observaciones) && strpos($observaciones, '--- Información de Envío ---') === false) {
-                $pedido->observaciones = $observaciones . "\n" . $infoEnvio;
-            } elseif (empty($observaciones)) {
-                $pedido->observaciones = $infoEnvio;
-            }
+            // Nota: La información del envío se guarda en pedido_entregas, no en observaciones
+            Log::info('Información de envío recibida', [
+                'pedido_id' => $pedidoId,
+                'envio_id' => $request->envio_id,
+                'envio_codigo' => $request->envio_codigo,
+                'estado' => $request->estado,
+            ]);
 
             $pedido->save();
+
+            // Guardar propuesta de vehículos si viene en los documentos
+            $documentosGuardados = [];
+            if ($request->has('documentos.propuesta_vehiculos') && !empty($request->input('documentos.propuesta_vehiculos'))) {
+                try {
+                    $directorio = "pedidos/{$pedido->id}/documentos-entrega";
+                    if (!Storage::exists($directorio)) {
+                        Storage::makeDirectory($directorio);
+                    }
+
+                    $pdfContent = base64_decode($request->input('documentos.propuesta_vehiculos'));
+                    if ($pdfContent !== false) {
+                        $nombreArchivo = "propuesta-vehiculos-{$request->envio_codigo}.pdf";
+                        $rutaCompleta = "{$directorio}/{$nombreArchivo}";
+                        Storage::put($rutaCompleta, $pdfContent);
+                        
+                        $documentosGuardados['propuesta_vehiculos'] = $rutaCompleta;
+                        
+                        Log::info('Propuesta de vehículos guardada desde asignación', [
+                            'pedido_id' => $pedidoId,
+                            'envio_id' => $request->envio_id,
+                            'ruta' => $rutaCompleta,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error guardando propuesta de vehículos desde asignación', [
+                        'pedido_id' => $pedidoId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // Guardar o actualizar registro en pedido_entregas con la propuesta de vehículos
+            if (!empty($documentosGuardados)) {
+                // Usar fecha de asignación como fecha_entrega por defecto (aunque aún no esté entregado)
+                // Esto es necesario porque fecha_entrega es NOT NULL en la base de datos
+                $fechaEntrega = $request->fecha_asignacion 
+                    ? \Carbon\Carbon::parse($request->fecha_asignacion)->format('Y-m-d H:i:s')
+                    : now()->format('Y-m-d H:i:s');
+                
+                DB::table('pedido_entregas')->updateOrInsert(
+                    [
+                        'pedido_id' => $pedido->id,
+                        'envio_id' => $request->envio_id,
+                    ],
+                    [
+                        'envio_codigo' => $request->envio_codigo,
+                        'fecha_entrega' => $fechaEntrega, // Usar fecha de asignación como placeholder
+                        'transportista_nombre' => $request->transportista['nombre'] ?? 'N/A',
+                        'documentos' => json_encode($documentosGuardados),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+                
+                Log::info('Registro en pedido_entregas actualizado con propuesta de vehículos', [
+                    'pedido_id' => $pedidoId,
+                    'envio_id' => $request->envio_id,
+                    'documentos' => array_keys($documentosGuardados),
+                ]);
+            }
 
             DB::commit();
 
@@ -149,6 +194,7 @@ class PedidoAsignacionController extends Controller
                 'envio_id' => $request->envio_id,
                 'envio_codigo' => $request->envio_codigo,
                 'transportista_id' => $request->transportista['id'] ?? null,
+                'tiene_propuesta_vehiculos' => !empty($documentosGuardados),
             ]);
 
             return response()->json([
@@ -157,6 +203,7 @@ class PedidoAsignacionController extends Controller
                 'pedido_id' => $pedidoId,
                 'envio_id' => $request->envio_id,
                 'envio_codigo' => $request->envio_codigo,
+                'documentos_guardados' => !empty($documentosGuardados) ? array_keys($documentosGuardados) : [],
             ]);
 
         } catch (\Exception $e) {

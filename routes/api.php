@@ -30,6 +30,12 @@ Route::post('/pedidos/{pedido}/asignacion-envio', [PedidoAsignacionController::c
 Route::post('/pedidos/{pedido}/documentos-entrega', [PedidoDocumentosController::class, 'recibirDocumentos'])
     ->name('api.pedidos.documentos-entrega');
 
+// API para buscar pedidos por envío (sin autenticación, para integración con plantaCruds)
+Route::get('/pedidos/buscar-por-envio', [PedidoController::class, 'buscarPorEnvio'])
+    ->name('api.pedidos.buscar-por-envio');
+Route::get('/pedidos/buscar-por-envio-id', [PedidoController::class, 'buscarPorEnvioId'])
+    ->name('api.pedidos.buscar-por-envio-id');
+
 // API para obtener información de un almacén por ID (sin autenticación, para integración con Trazabilidad)
 Route::get('/almacenes/{id}', function ($id) {
     $almacen = \App\Models\Almacen::find($id);

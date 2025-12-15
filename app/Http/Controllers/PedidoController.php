@@ -622,29 +622,128 @@ class PedidoController extends Controller
     }
 
     /**
+     * Buscar pedido por código de envío (API)
+     * GET /api/pedidos/buscar-por-envio
+     */
+    public function buscarPorEnvio(Request $request)
+    {
+        $request->validate([
+            'envio_codigo' => 'nullable|string',
+            'envio_id' => 'nullable|integer',
+        ]);
+
+        $envioCodigo = $request->input('envio_codigo');
+        $envioId = $request->input('envio_id');
+
+        // Buscar en pedido_entregas
+        $query = DB::table('pedido_entregas');
+        
+        if ($envioId) {
+            $query->where('envio_id', $envioId);
+        } elseif ($envioCodigo) {
+            $query->where('envio_codigo', $envioCodigo);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe proporcionar envio_id o envio_codigo',
+            ], 400);
+        }
+
+        $entrega = $query->first();
+
+        if ($entrega) {
+            $pedido = Pedido::find($entrega->pedido_id);
+            if ($pedido) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'id' => $pedido->id,
+                        'codigo_comprobante' => $pedido->codigo_comprobante,
+                    ],
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Pedido no encontrado',
+        ], 404);
+    }
+
+    /**
+     * Buscar pedido por envio_id en pedido_entregas (API)
+     * GET /api/pedidos/buscar-por-envio-id
+     */
+    public function buscarPorEnvioId(Request $request)
+    {
+        $request->validate([
+            'envio_id' => 'required|integer',
+        ]);
+
+        $envioId = $request->input('envio_id');
+
+        $entrega = DB::table('pedido_entregas')
+            ->where('envio_id', $envioId)
+            ->first();
+
+        if ($entrega) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'pedido_id' => $entrega->pedido_id,
+                    'envio_id' => $entrega->envio_id,
+                    'envio_codigo' => $entrega->envio_codigo,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Envío no encontrado en pedido_entregas',
+        ], 404);
+    }
+
+    /**
      * Listar pedidos con documentación entregada
      */
     public function documentacion()
     {
         $user = Auth::user();
         
+        \Log::info('📄 [PedidoController@documentacion] Consultando documentación', [
+            'user_id' => $user->id,
+            'user_role' => $user->roles->pluck('name')->toArray(),
+        ]);
+        
         // Obtener pedidos del propietario/administrador que tienen documentación
+        // Similar a seguimiento(), filtramos por administrador_id (no por almacenes)
+        // En PostgreSQL no podemos comparar JSON directamente en WHERE, así que filtramos en PHP
         if ($user->hasRole('propietario')) {
             $admins = User::role('administrador')
                 ->where('user_id', $user->id)
                 ->pluck('id');
             
+            \Log::info('📄 [PedidoController@documentacion] Propietario - Administradores encontrados', [
+                'admins_ids' => $admins->toArray(),
+                'user_id' => $user->id,
+            ]);
+            
             $pedidosConDocumentos = DB::table('pedido_entregas')
                 ->join('pedidos', 'pedido_entregas.pedido_id', '=', 'pedidos.id')
                 ->where(function($query) use ($admins, $user) {
-                    $query->whereIn('pedidos.administrador_id', $admins)
-                          ->orWhere('pedidos.administrador_id', $user->id);
+                    if ($admins->isNotEmpty()) {
+                        $query->whereIn('pedidos.administrador_id', $admins);
+                    }
+                    $query->orWhere('pedidos.administrador_id', $user->id);
                 })
+                ->whereNotNull('pedido_entregas.documentos')
                 ->select(
                     'pedidos.id',
                     'pedidos.codigo_comprobante',
                     'pedidos.fecha',
                     'pedidos.estado',
+                    'pedidos.almacen_id',
+                    'pedidos.administrador_id',
                     'pedido_entregas.envio_id',
                     'pedido_entregas.envio_codigo',
                     'pedido_entregas.fecha_entrega',
@@ -653,21 +752,23 @@ class PedidoController extends Controller
                     'pedido_entregas.created_at'
                 )
                 ->orderBy('pedido_entregas.created_at', 'desc')
-                ->get()
-                ->map(function ($pedido) {
-                    // Decodificar documentos JSON
-                    $pedido->documentos = json_decode($pedido->documentos, true) ?? [];
-                    return $pedido;
-                });
+                ->get();
         } else {
+            \Log::info('📄 [PedidoController@documentacion] Administrador', [
+                'user_id' => $user->id,
+            ]);
+            
             $pedidosConDocumentos = DB::table('pedido_entregas')
                 ->join('pedidos', 'pedido_entregas.pedido_id', '=', 'pedidos.id')
                 ->where('pedidos.administrador_id', $user->id)
+                ->whereNotNull('pedido_entregas.documentos')
                 ->select(
                     'pedidos.id',
                     'pedidos.codigo_comprobante',
                     'pedidos.fecha',
                     'pedidos.estado',
+                    'pedidos.almacen_id',
+                    'pedidos.administrador_id',
                     'pedido_entregas.envio_id',
                     'pedido_entregas.envio_codigo',
                     'pedido_entregas.fecha_entrega',
@@ -676,12 +777,57 @@ class PedidoController extends Controller
                     'pedido_entregas.created_at'
                 )
                 ->orderBy('pedido_entregas.created_at', 'desc')
-                ->get()
-                ->map(function ($pedido) {
-                    $pedido->documentos = json_decode($pedido->documentos, true) ?? [];
-                    return $pedido;
-                });
+                ->get();
         }
+        
+        \Log::info('📄 [PedidoController@documentacion] Registros encontrados en BD', [
+            'total_registros' => $pedidosConDocumentos->count(),
+            'pedidos_ids' => $pedidosConDocumentos->pluck('id')->toArray(),
+            'administradores_ids' => $pedidosConDocumentos->pluck('administrador_id')->unique()->toArray(),
+        ]);
+        
+        // Decodificar documentos JSON y filtrar documentos vacíos
+        $pedidosConDocumentos = $pedidosConDocumentos->map(function ($pedido) {
+            $documentosRaw = $pedido->documentos;
+            
+            // Decodificar JSON
+            if (is_string($documentosRaw)) {
+                $pedido->documentos = json_decode($documentosRaw, true) ?? [];
+            } else {
+                $pedido->documentos = $documentosRaw ?? [];
+            }
+            
+            \Log::debug('📄 [PedidoController@documentacion] Procesando pedido', [
+                'pedido_id' => $pedido->id,
+                'documentos_raw' => is_string($documentosRaw) ? substr($documentosRaw, 0, 100) : 'no es string',
+                'documentos_decodificados' => $pedido->documentos,
+                'count_documentos' => is_array($pedido->documentos) ? count($pedido->documentos) : 0,
+            ]);
+            
+            // Filtrar documentos vacíos o nulos
+            $pedido->documentos = array_filter($pedido->documentos, function($doc) {
+                return !empty($doc) && $doc !== null && $doc !== '';
+            });
+            
+            return $pedido;
+        })->filter(function($pedido) {
+            // Solo incluir pedidos que tienen al menos un documento válido
+            $tieneDocumentos = !empty($pedido->documentos) && is_array($pedido->documentos) && count($pedido->documentos) > 0;
+            
+            if (!$tieneDocumentos) {
+                \Log::debug('📄 [PedidoController@documentacion] Pedido filtrado (sin documentos válidos)', [
+                    'pedido_id' => $pedido->id,
+                    'documentos' => $pedido->documentos,
+                ]);
+            }
+            
+            return $tieneDocumentos;
+        });
+        
+        \Log::info('📄 [PedidoController@documentacion] Resultados finales', [
+            'total_pedidos' => $pedidosConDocumentos->count(),
+            'pedidos_ids' => $pedidosConDocumentos->pluck('id')->toArray(),
+        ]);
         
         return view('pedidos.documentacion.index', compact('pedidosConDocumentos'));
     }
