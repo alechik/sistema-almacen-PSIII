@@ -18,6 +18,7 @@ use App\Http\Controllers\TipoSalidaController;
 use App\Http\Controllers\UnidadMedidaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculoController;
+use App\Http\Controllers\IncidenteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -166,6 +167,14 @@ Route::middleware(['auth'])->group(function () {
     // Documentación de pedidos (DEBE IR ANTES DE /pedidos/{pedido})
     Route::get('/pedidos/documentacion', [PedidoController::class, 'documentacion'])
         ->name('pedidos.documentacion');
+    
+    // Monitoreo de incidentes (DEBE IR ANTES DE /pedidos/{pedido})
+    Route::get('/incidentes', [IncidenteController::class, 'index'])
+        ->name('incidentes.index');
+    Route::get('/incidentes/{incidente}', [IncidenteController::class, 'show'])
+        ->name('incidentes.show');
+    Route::get('/incidentes/{incidente}/foto', [IncidenteController::class, 'verFoto'])
+        ->name('incidentes.foto');
     
     // ==================== RUTAS DINÁMICAS (DESPUÉS DE RUTAS ESPECÍFICAS) ====================
     

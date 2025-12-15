@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PedidoStatusController;
 use App\Http\Controllers\Api\PedidoAsignacionController;
 use App\Http\Controllers\Api\PedidoDocumentosController;
+use App\Http\Controllers\Api\IncidenteController;
 use App\Http\Controllers\PedidoController;
 
 /*
@@ -29,6 +30,10 @@ Route::post('/pedidos/{pedido}/asignacion-envio', [PedidoAsignacionController::c
 // Webhook desde plantaCruds para recibir documentos de entrega (sin autenticación)
 Route::post('/pedidos/{pedido}/documentos-entrega', [PedidoDocumentosController::class, 'recibirDocumentos'])
     ->name('api.pedidos.documentos-entrega');
+
+// Webhook desde plantaCruds para recibir notificación de incidente (sin autenticación)
+Route::post('/pedidos/{pedido}/incidente', [IncidenteController::class, 'recibirIncidente'])
+    ->name('api.pedidos.incidente');
 
 // API para buscar pedidos por envío (sin autenticación, para integración con plantaCruds)
 Route::get('/pedidos/buscar-por-envio', [PedidoController::class, 'buscarPorEnvio'])

@@ -605,7 +605,9 @@ class PedidoController extends Controller
         });
         
         // Log para depuración (temporal)
-        \Log::info('Pedidos con envío encontrados', [
+        \Log::info('📦 [PedidoController@seguimiento] Pedidos con envío encontrados', [
+            'user_id' => $user->id,
+            'user_role' => $user->roles->pluck('name')->toArray(),
             'total_pedidos' => $pedidos->count(),
             'pedidos_con_envio' => $pedidosConEnvio->count(),
             'pedidos_ids' => $pedidosConEnvio->pluck('pedido_id')->toArray(),
@@ -617,6 +619,17 @@ class PedidoController extends Controller
         
         // URL de la API de plantaCruds
         $plantaCrudsApiUrl = env('PLANTA_CRUDS_API_URL', 'http://localhost:8001');
+        
+        // Asegurar que siempre tenga un valor
+        if (empty($plantaCrudsApiUrl)) {
+            $plantaCrudsApiUrl = 'http://localhost:8001';
+        }
+        
+        \Log::info('📦 [PedidoController@seguimiento] Datos pasados a la vista', [
+            'pedidoEnvioIds' => $pedidoEnvioIds,
+            'plantaCrudsApiUrl' => $plantaCrudsApiUrl,
+            'total_envio_ids' => count($pedidoEnvioIds),
+        ]);
         
         return view('pedidos.seguimiento', compact('pedidosConEnvio', 'plantaCrudsApiUrl', 'pedidoEnvioIds'));
     }

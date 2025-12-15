@@ -109,6 +109,12 @@
                         <p>Documentación</p>
                       </a>
                     </li>
+                    <li class="nav-item">
+                      <a href="{{route('incidentes.index')}}" class="nav-link {{ request()->routeIs('incidentes.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-exclamation-triangle-fill"></i>
+                        <p>Monitoreo de Incidentes</p>
+                      </a>
+                    </li>
                     @if (auth()->user()->hasAnyRole(['administrador']))
                       <li class="nav-item">
                         <a href="{{route('ingresos.create')}}" class="nav-link {{ request()->routeIs('ingresos.create') ? 'active' : '' }}">
