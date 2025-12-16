@@ -1,69 +1,197 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>{{ config('app.name') }} | Registro</title>
 
-        <div>
-            <x-input-label for="full_name" :value="__('Full Name')" />
-            <x-text-input id="full_name" class="block mt-1 w-full" type="text" name="full_name" :value="old('full_name')" required />
-            <x-input-error :messages="$errors->get('full_name')" class="mt-2" />
-        </div>
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Nombre de usuario')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-        </div>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+    <!-- AdminLTE + Bootstrap -->
+    <link rel="stylesheet" href="{{ asset('css/adminlte.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+</head>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+<body class="register-page bg-body-secondary">
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
+<div class="register-box">
+    <div class="card card-outline card-primary">
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="card-header text-center">
+            <h1 class="mb-0"><b>Sistema</b> Almacén</h1>
         </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+        <div class="card-body register-card-body">
+            <p class="register-box-msg">Registrar nueva cuenta</p>
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
+            <form method="POST" action="{{ route('register') }}">
+                @csrf
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                {{-- Full Name --}}
+                <div class="input-group mb-3">
+                    <input
+                        type="text"
+                        name="full_name"
+                        class="form-control @error('full_name') is-invalid @enderror"
+                        placeholder="Nombre completo"
+                        value="{{ old('full_name') }}"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-person"></span>
+                    </div>
+
+                    @error('full_name')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                {{-- Username --}}
+                <div class="input-group mb-3">
+                    <input
+                        type="text"
+                        name="name"
+                        class="form-control @error('name') is-invalid @enderror"
+                        placeholder="Nombre de usuario"
+                        value="{{ old('name') }}"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-person-badge"></span>
+                    </div>
+
+                    @error('name')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                {{-- Email --}}
+                <div class="input-group mb-3">
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control @error('email') is-invalid @enderror"
+                        placeholder="Correo electrónico"
+                        value="{{ old('email') }}"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-envelope"></span>
+                    </div>
+
+                    @error('email')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                {{-- Password --}}
+                <div class="input-group mb-3">
+                    <input
+                        type="password"
+                        name="password"
+                        class="form-control @error('password') is-invalid @enderror"
+                        placeholder="Contraseña"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-lock-fill"></span>
+                    </div>
+
+                    @error('password')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                {{-- Confirm Password --}}
+                <div class="input-group mb-3">
+                    <input
+                        type="password"
+                        name="password_confirmation"
+                        class="form-control @error('password_confirmation') is-invalid @enderror"
+                        placeholder="Confirmar contraseña"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-lock"></span>
+                    </div>
+
+                    @error('password_confirmation')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                {{-- Company --}}
+                <div class="input-group mb-3">
+                    <input
+                        type="text"
+                        name="company"
+                        class="form-control @error('company') is-invalid @enderror"
+                        placeholder="Empresa"
+                        value="{{ old('company') }}"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-building"></span>
+                    </div>
+
+                    @error('company')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                {{-- Phone Number --}}
+                <div class="input-group mb-4">
+                    <input
+                        type="text"
+                        name="phone_number"
+                        class="form-control @error('phone_number') is-invalid @enderror"
+                        placeholder="Teléfono"
+                        value="{{ old('phone_number') }}"
+                        required
+                    >
+                    <div class="input-group-text">
+                        <span class="bi bi-telephone"></span>
+                    </div>
+
+                    @error('phone_number')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                <div class="row">
+                    <div class="col-8">
+                        <a href="{{ route('login') }}" class="text-decoration-none">
+                            Ya tengo una cuenta
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Registrar
+                        </button>
+                    </div>
+                </div>
+
+            </form>
         </div>
-        
-        <div class="mt-4">
-            <x-input-label for="company" :value="__('Company')" />
-            <x-text-input id="company" class="block mt-1 w-full" type="text" name="company" :value="old('company')" required />
-            <x-input-error :messages="$errors->get('company')" class="mt-2" />
-        </div>
-        <div class="mt-4">
-            <x-input-label for="phone_number" :value="__('Phone Number')" />
-            <x-text-input id="phone_number" class="block mt-1 w-full" type="text" name="phone_number" :value="old('phone_number')" required />
-            <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
-        </div>
+    </div>
+</div>
 
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/adminlte.js') }}"></script>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+</body>
+</html>

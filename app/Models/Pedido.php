@@ -9,7 +9,7 @@ class Pedido extends Model
     const CANCELADO = 0; //el proveedor puede cancelar el pedido
     const EMITIDO = 1; //administrador de almacen
     const CONFIRMADO = 2; //el propietario
-    const TERMINADO = 3; //hacemos envio del pedido al proveedor
+    const TERMINADO = 3; //hacemos envio del pedido al proveedor y este lo aprueba  
     const ANULADO = 4; //el propietario puede anular el pedido
     const EN_TRANSITO = 5; // cuando el sistema de logistica recibe el pedido
     const COMPLETADO = 6; // cuando el pedido ha sido entregado completamente

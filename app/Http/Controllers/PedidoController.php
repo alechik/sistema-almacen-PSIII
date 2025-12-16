@@ -250,7 +250,7 @@ class PedidoController extends Controller
 
     public function createFromStockMinimo(Almacen $almacen, $proveedorId)
     {
-        // dd($almacen);
+        // dd($almacen,$proveedorId);
         $admin = Auth::user();
 
         if (!$admin->hasRole('administrador')) {
@@ -262,13 +262,13 @@ class PedidoController extends Controller
             ->whereHas('almacenes', function ($q) use ($almacen) {
                 $q->where('almacen_id', $almacen->id)
                     ->whereColumn('stock', '<=', 'stock_minimo')
-                    ->where('en_pedido', 0);
+                    ->where('en_pedido', 2);
             })
             ->with(['almacenes' => function ($q) use ($almacen) {
                 $q->where('almacen_id', $almacen->id);
             }])
             ->get();
-
+            // dd($productos);
         if ($productos->isEmpty()) {
             return back()->with('error', 'No hay productos con stock mínimo para este proveedor.');
         }
@@ -283,6 +283,7 @@ class PedidoController extends Controller
             ->get();
         // dd($operadores);
         $lastId = Pedido::max('id') ?? 0;
+
 
         return view('pedidos.create-stock-minimo', [
             'almacen'        => $almacen,
@@ -305,9 +306,7 @@ class PedidoController extends Controller
             return back()->with('error', 'Solo los pedidos EMITIDOS pueden ser confirmados.');
         }
 
-        $pedido->update([
-            'estado' => Pedido::CONFIRMADO
-        ]);
+
 
         // Preparar productos para la API de Planta
         $products = $pedido->detalles->map(function ($detalle, $index) {
@@ -358,12 +357,15 @@ class PedidoController extends Controller
         ];
 
         try {
-            $apiUrl = 'http://localhost:8001/api/customer-orders';
+            $apiUrl = 'http://trazabilidad.dasalas.shop/api/customer-orders';
             $response = Http::post($apiUrl, $data);
             // dd($response->json());
             if ($response->failed()) {
                 return back()->with('error', 'Error al enviar pedido a Planta: ' . $response->body());
             }
+            $pedido->update([
+                'estado' => Pedido::CONFIRMADO
+            ]);
         } catch (\Exception $e) {
             return back()->with('error', 'Excepción al enviar pedido: ' . $e->getMessage());
         }

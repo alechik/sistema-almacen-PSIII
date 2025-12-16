@@ -205,7 +205,7 @@ public function syncFromPlanta()
 
         // 1️⃣ Primera llamada para saber cuántas páginas hay
         $response = Http::acceptJson()
-            ->get('http://localhost:8001/api/products?page=1');
+            ->get('http://trazabilidad.dasalas.shop/api/products?page=1');
 
         if (!$response->successful()) {
             return back()->with('error', 'No se pudo conectar con la API de planta.');
@@ -217,7 +217,7 @@ public function syncFromPlanta()
         for ($page = 1; $page <= $lastPage; $page++) {
 
             $response = Http::acceptJson()
-                ->get("http://localhost:8001/api/products?page={$page}");
+                ->get("http://trazabilidad.dasalas.shop/api/products?page={$page}");
 
             $productosApi = $response->json('data');
 

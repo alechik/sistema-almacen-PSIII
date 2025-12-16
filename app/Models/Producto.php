@@ -79,7 +79,7 @@ class Producto extends Model
     {
         return $query->whereHas('almacenes', function ($q) use ($userId) {
             $q->whereColumn('almacen_productos.stock', '<=', 'almacen_productos.stock_minimo')
-                ->where('almacen_productos.en_pedido', 0)
+                ->where('almacen_productos.en_pedido', 2)
                 ->whereIn('almacen_productos.almacen_id', function ($sub) use ($userId) {
                     $sub->select('almacen_id')
                         ->from('almacen_users')

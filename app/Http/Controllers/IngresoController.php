@@ -17,12 +17,13 @@ use Illuminate\Support\Facades\Auth;
 class IngresoController extends Controller
 {
     /**
+     * ESTADO = 0 : CANCELADO
      * ESTADO = 1 : EMITIDO
      * ESTADO = 2 : COMPLETADO
-     * ESTADO = 3 : ANULADO
-     * ESTADO = 4 : INCIDENTE
-     * ESTADO = 5 : ACEPTADO -> por parte del proveedor
-     * ESTADO = 6 : TERMINADO -> ruta completada
+     * ESTADO = 3 : TERMINADO
+     * ESTADO = 4 : ANULADO
+     * ESTADO = 5 : EN_TRANSITO -> logistica
+     * ESTADO = 6 : COMPLETADO -> logistica
      * 
      */
     //CONSUMIR APIS DE PROVEEDORES EXTERNOS
@@ -98,8 +99,8 @@ class IngresoController extends Controller
             return back()->with('error', 'Solo un usuario con rol ADMINISTRADOR puede registrar ingresos.');
         }
 
-        // Obtener pedidos confirmados (estado = 3)
-        $pedidos = Pedido::where('estado', 2)
+        // Obtener pedidos confirmados TERMINADO(estado = 3)
+        $pedidos = Pedido::where('estado', 3)
             ->whereDoesntHave('ingreso')   // el pedido NO debe tener ingreso
             ->with(['detalles.producto', 'almacen'])
             ->get();

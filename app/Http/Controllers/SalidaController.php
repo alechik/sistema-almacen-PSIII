@@ -77,44 +77,40 @@ class SalidaController extends Controller
 
     public function create()
     {
-        // APIS DE VUNTOS DE VENTA EXTERNOS QUE LISTE LAS NOTAS DE VENTAS CONFIRMADAS
-        // JSON
-        // APIS LISTADO DE PUNTOS DE VENTAS EXTERNOS
-
         $propietario = Auth::user()->parent;
-        // dd($propietarioID->parent->id);
-        $almacenes = Almacen::all()->where('user_id', $propietario->id);
-        // dd( $almacenes);
-        $operadores = User::where('user_id', $propietario->id)
-            ->role('operador')   // o ->whereHas('roles', ...)
-            ->get();
 
-        // dd($operadores);
+        $almacenes = Almacen::where('user_id', $propietario->id)->get();
+
+        $operadores = User::where('user_id', $propietario->id)
+            ->role('operador')->get();
+
         $transportistas = User::where('user_id', $propietario->id)
-            ->role('transportista')   // o ->whereHas('roles', ...)
-            ->get();
+            ->role('transportista')->get();
+
         $vehiculos = Vehiculo::all();
         $tiposSalida = TipoSalida::all();
-        $productos = Producto::all();
 
-        // Puntos de venta simulados por falta de API
+        // ✅ Productos que tengan stock en al menos un almacén
+        $productos = Producto::whereHas('almacenes', function ($q) {
+            $q->where('stock', '>', 0);
+        })->get();
+
         $puntosVenta = $this->puntos_ventas;
 
-        // Ultimo ID para generar correlativos
         $lastId = (Salida::max('id') ?? 0) + 1;
         $lastNota = Salida::max('nota_venta_id') ?? 0;
 
-        return view('salidas.create', [
-            'almacenes' => $almacenes,
-            'operadores' => $operadores,
-            'transportistas' => $transportistas,
-            'vehiculos' => $vehiculos,
-            'tiposSalida' => $tiposSalida,
-            'productos' => $productos,
-            'puntosVenta' => $puntosVenta,
-            'lastId' => $lastId,
-            'lastNota' => $lastNota
-        ]);
+        return view('salidas.create', compact(
+            'almacenes',
+            'operadores',
+            'transportistas',
+            'vehiculos',
+            'tiposSalida',
+            'productos',
+            'puntosVenta',
+            'lastId',
+            'lastNota'
+        ));
     }
 
     public function store(Request $request)

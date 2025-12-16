@@ -128,7 +128,7 @@
                                 <td class="text-center">
 
                                     <a href="{{ route('almacen-productos.show', $ap) }}" 
-                                       class="btn btn-info btn-sm">
+                                       class="btn btn-info btn-sm" hidden>
                                         <i class="bi bi-eye"></i>
                                     </a>
 
